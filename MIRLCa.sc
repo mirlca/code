@@ -69,30 +69,35 @@ MIRLCa : MIRLCRep2 {
 			"fields"->"id,name,analysis",
 			"descriptors"->"lowlevel.mfcc"
 		];
+		var index_offset = 0;
+		var counter = 0;
 
 		target = metadata[targetnumsnd];  // before: metadata[targetnumsnd - 1];
 
 		target.getSimilar(params:query_params,
 			action: { |p|
-				p[0].dict.keys.postln;
-				p[0].id.postln;
-				//p[0].dict.values.postln; // The most original sound is itself
-				p[1].dict.keys.postln;
-				p[1].id.postln;
-				//p[1].dict.values.postln; // The next most similar sound in the list
+				// list of 10 candidate sounds + p[0] that it is identity (same sound)
+				11.do{ |i|
+					// p[i].dict.keys.postln;
+					p[i].id.postln;
+				};
 
 				if(size != 10, {size = 10}); // temp hack to make sure we select the best candidate from a set of 10 audio samples
+
 				size.do { |index|
+					index_offset =  index_offset + 1;
+					snd = p[index_offset];
 
-					snd = p[index+1]; // to avoid retrieving the same sound of the query
-
-					//check if snd.id already exists, if so, take next sound
-					if (metadata.size > 0,
+					// check if snd.id already exists, if so, take next sound
+					// this needs to be revised to keep a window frame of 10 sounds
+					if ( metadata.size > 0,
 						{
-							while ( {this.sndidexist(snd.id) == 1},
+							counter = 0;
+							while ( { this.sndidexist(snd.id) == 1 },
 								{
-									index = index + 1 + size;
-									snd = p[index];
+									counter = counter + 1;
+									index_offset = index_offset + counter;
+									snd = p[index_offset];
 									postln ("repeated sound, getting another sound...");
 							});
 					});

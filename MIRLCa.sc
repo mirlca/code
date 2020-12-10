@@ -27,6 +27,10 @@ MIRLCa : MIRLCRep2 {
     }
 
 	initagent {
+		var randomnum = 100000.rand;
+		var test_dataset_name = \mlpclassify_testdata++randomnum.asSymbol;
+		var stand_test_dataset_name = \mlpclassify_stand_test_data++randomnum.asSymbol;
+		var test_predicted_label_dataset_name = \mlpclassify_predictlabels++randomnum.asSymbol;
 
 		server.waitForBoot {
 
@@ -34,11 +38,11 @@ MIRLCa : MIRLCRep2 {
 
 		fork {
 		test_dataset.free;
-		test_dataset = FluidDataSet(server,\mlpclassify_testdata);
+		test_dataset = FluidDataSet(server,test_dataset_name);
 		stand_test_dataset.free;
-		stand_test_dataset = FluidDataSet(server,\mlpclassify_stand_test_data);
+		stand_test_dataset = FluidDataSet(server,stand_test_dataset_name);
 		test_predicted_label_dataset.free;
-		test_predicted_label_dataset = FluidLabelSet(server,\mlpclassify_predictlabels);
+		test_predicted_label_dataset = FluidLabelSet(server,test_predicted_label_dataset_name);
 		standardizer.free;
 		standardizer = FluidStandardize(server);
 		pca.free;

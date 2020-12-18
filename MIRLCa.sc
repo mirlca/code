@@ -25,6 +25,7 @@ MIRLCa : MIRLCRep2 {
 	var is_training;
 	var temp_list_training;
 	var sndid_t;
+	var sndid_old_t;
 	var snd_t;
 	var manual_dataset_dict;
 	var training_dict;
@@ -94,6 +95,59 @@ MIRLCa : MIRLCRep2 {
 
 	}
 
+    //------------------//
+    // GET SOUND BY ID
+    //------------------//
+    // This function can be used as a standalone public function to get [1..n] sounds by ID, and it is also used as a private function by random, tag, similar, filter, content to get sounds
+    // params: id, size
+	// Overwriting this function to avoid sounds without analysis information
+    id { |id = 31362, size = 1|
+
+        backendClass.getSound(id,
+            { |f|
+                //available metadata: "id","url","name","tags","description","geotag","created","license","type","channels","filesize""bitrate","bitdepth","duration","samplerate","username","Jovica","pack","pack_name","download","bookmark","previews","preview-lq-mp3","preview-hq-ogg","preview-hq-mp3","images","num_downloads","avg_rating","num_ratings","rate":,"comments","num_comments","comment","similar_sounds","analysis","analysis_frames","analysis_stats"
+
+				snd = f;
+
+				if (is_training == False,
+					{
+						// sndid_t = 329706; // This SoundID is for testing "similar_sounds":null
+						if ( snd["similar_sounds"].isNil , {
+							postln ("This sound does not have similar_sounds information. Please try another sound.");
+						}, {
+
+							index = metadata.size;
+							file.write(snd["name"] + " by " + snd["username"] + snd["url"] + "\n");
+
+							metadata.add(index -> f);
+
+							if (size == 1, {
+								this.loadmetadata(size);
+							},{ // size > 1
+								if ( (metadata.size - poolsizeold) == size, // need to wait until asynchronous call is ready! once all sounds are added in the dictionary, they can be retrieved
+									{
+										this.loadmetadata(size);
+									}
+								);
+							});
+
+						} );
+
+					},
+					{
+						// Training is TRUE, only 1 sound at a time
+						index = 0;
+						file.write(snd["name"] + " by " + snd["username"] + snd["url"] + "\n");
+						metadata.add(index -> f);
+						this.loadmetadata_t(1); // size = 1, only 1 sound at a time
+					}
+				)
+
+
+
+        } );
+    } //--//
+
 
 	similar { | targetnumsnd = 0, size = 10 |
         var newSnd;
@@ -111,16 +165,18 @@ MIRLCa : MIRLCRep2 {
 
 		target.getSimilar(params:query_params,
 			action: { |p|
-				// list of 10 candidate sounds + p[0] that it is identity (same sound)
+
+				// list of 10 candidate sounds + p[0] that it is identity (same sound), just in case some sounds are repeated or the sounds are already in the bucket
 				11.do{ |i|
 					// p[i].dict.keys.postln;
 					p[i].id.postln;
+					// p[i].dict.values.postln;
 				};
 
 				if(size != 10, {size = 10}); // temp hack to make sure we select the best candidate from a set of 10 audio samples
 
 				size.do { |index|
-					index_offset =  index_offset + 1;
+					index_offset = index_offset + 1;
 					snd = p[index_offset];
 
 					// check if snd.id already exists, if so, take next sound
@@ -244,11 +300,21 @@ MIRLCa : MIRLCRep2 {
 		}, {
 			// "you are training already".postln;
 		});
-
+		if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
+				"Existing sound fading out...".postln;
+				this.fadeout_t;
+		});
 		// "give a random sound".postln;
 		this.giverandomsound();
+		postln("********************************************");
+		"Please wait until the sound has been downloaded...".postln;
+		postln("********************************************");
 
 	} //--//
+
+	continuetraining {
+		this.starttraining();
+	}
 
 
 	ok {
@@ -259,8 +325,10 @@ MIRLCa : MIRLCRep2 {
 			temp_list_training.postln;
 			// "save sound (temp array) in a dictionary (global variable) with label good".postln;
 			manual_dataset_dict.add(sndid_t.asInteger -> temp_list_training); // dictionary key = ID; dictionary value = y array
+			postln("********************************************");
 			postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
 			postln("The sound IDs are: "++manual_dataset_dict.keys);
+			postln("********************************************");
 			this.giverandomsound();
 		}, {
 			"You need to start training first".postln;
@@ -277,8 +345,10 @@ MIRLCa : MIRLCRep2 {
 			temp_list_training.postln;
 			// "save sound (temp array) in a dictionary (global variable) with label good".postln;
 			manual_dataset_dict.add(sndid_t.asInteger -> temp_list_training); // dictionary key = ID; dictionary value = y array
+			postln("********************************************");
 			postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
 			postln("The sound IDs are: "++manual_dataset_dict.keys);
+			postln("********************************************");
 			this.giverandomsound();
 		}, {
 			"You need to start training first".postln;
@@ -286,30 +356,46 @@ MIRLCa : MIRLCRep2 {
 
 	} //--//
 
+	pause {
+		"Process paused.".postln;
+		if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
+				"Fading out the previous sound...".postln;
+				this.fadeout_t;
+		});
+	}
+
 	//------------------//
     // QUERY BY RANDOM
     //------------------//
-	// This function gets 1 sound by random, and plays it (for training)
+	// This function gets 1 sound by random, and plays it (ONLY for training)
     giverandomsound {
 
-		if (sndid_t.notNil, {
-			"if there is an existing sound, fade it out".postln;
+
+		if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
+			"Fading out the previous sound...".postln;
 			this.fadeout_t;
 		});
 
-		"then give a random sound".postln;
+		// "then give a random sound".postln;
 		// "its descriptors are stored in a temp array".postln;
 
-        sndid_t = rrand (1, databaseSize);
+		sndid_t = rrand (1, databaseSize);
+		// sndid_t = 329706; // This SoundID is for testing "analysis":null
 
         backendClass.getSound ( sndid_t,
             { |f|
 
-				"this random sound is stored in a global snd variable".postln;
+				// "this random sound is stored in a global snd variable".postln;
                 snd_t = f;
-				"sound is downloaded".postln;
+				// "sound is downloaded".postln;
 
-                if ( snd_t["detail"] == nil,
+				// if "analysis":null
+				if (snd_t["analysis"].isNil) {
+					"Sound analysis does not exist".postln;
+					// snd_t["analysis"].postln;
+				};
+
+                 if ( snd_t["detail"] == nil && snd_t["analysis"].notNil,
                     {
 						this.id(sndid_t, 1);
 
@@ -320,8 +406,9 @@ MIRLCa : MIRLCRep2 {
 						temp_list_training = List.fill(28,0);
 						temp_list_training[0] = sndid_t;
 
-						snd_t.getAnalysis("lowlevel.mfcc", {|val|
+						snd_t.getAnalysis("lowlevel.mfcc", { |val|
 							// val.postln;
+
 							temp_list_training[2] = val.lowlevel.mfcc.mean[0];
 							temp_list_training[3] = val.lowlevel.mfcc.mean[1];
 							temp_list_training[4] = val.lowlevel.mfcc.mean[2];
@@ -348,19 +435,24 @@ MIRLCa : MIRLCRep2 {
 							temp_list_training[25] = val["lowlevel"]["mfcc"]["var"][10];
 							temp_list_training[26] = val["lowlevel"]["mfcc"]["var"][11];
 							temp_list_training[27] = val["lowlevel"]["mfcc"]["var"][12];
-							temp_list_training.postln;
+
+
+							// temp_list_training.postln;
 						}, true);
 
-					"sound descriptors are downloaded".postln;
+						// "sound descriptors are downloaded".postln;
+						sndid_old_t = sndid_t;
 
                     },
                     {
-                        "SoundID does not exist".postln;
-						"Getting another sound...".postln;
+                        "Either SoundID or sound analysis does not exist".postln;
+						"I'm getting another sound...".postln;
 						this.giverandomsound();
                 } );
 
         } );
+
+
 
     } //--//
 
@@ -375,13 +467,20 @@ MIRLCa : MIRLCRep2 {
 		var test_labels_content = Dictionary.new;
 		var num_valid;
 
-		if (sndid_t.notNil, {
-			"if there is an existing sound, fade it out".postln;
+		if ( is_training == True, {
+			is_training = False;
+		});
+
+		if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
+			"Fading out the previous sound...".postln;
 			this.fadeout_t;
 		});
 
 		training_candidates = (manual_dataset_dict.size*perc).round.asInteger;
+		postln("********************************************");
 		postln("There are: "++training_candidates++" training_candidates");
+		postln("There are: "++(manual_dataset_dict.size - training_candidates)++" testing_candidates");
+		postln("********************************************");
 
 		manual_dataset_dict.keysDo { |key, count|
 			if( count < training_candidates, {
@@ -460,7 +559,10 @@ MIRLCa : MIRLCRep2 {
 				});
 				server.sync;
 			};
-			postln("Accuracy: "++(num_valid/test_label_dict.size));
+			postln("********************************************");
+			postln("Accuracy (0%-100%): "++(num_valid/test_label_dict.size));
+			postln("Continue training or Save to JSON files?");
+			postln("********************************************");
 		};
 
 	} //--//
@@ -473,24 +575,24 @@ MIRLCa : MIRLCRep2 {
 
 	} //--//
 
-	fadeout_t {
-		this.fadeout; // TODO: fix the unfound sounds
+	fadeout_t { |release = 1.0|
+
+		this.fadeout;
+
 	}
 
     //------------------//
-    // FADE OUT
+    // RETRIEVE SOUNDS
     //------------------//
-	// This function fades out all synths with a smooth fade out
-
-    /*fadeout {|release = 1.0|
-		sequential = False; // to avoid inconsistencies
-		synths.size.postln;
-		synths.size.do( { |index|
-				if(synths[index].notNil && synths[index].isRunning){
-					synths[index].set(\gate, 0, \rel, release)
-				};
-		});
-    }*/ //--//
+    // This function has been modified to only deal with one sound at a time for the training.
+	// It manages the dictionary metadata (sounds with fs info) and loads the new sound.
+    // It stores a group of one sound that is stored in index 1.
+    loadmetadata_t { |totalsnds = 1|
+        totalsnds.do ({ |index|
+            this.loadsounds(metadata, index);
+        });
+		this.printmetadata;
+    }
 
 
 }

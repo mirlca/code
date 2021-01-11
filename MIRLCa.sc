@@ -40,7 +40,7 @@ MIRLCa : MIRLCRep2 {
 	var stand_test_dataset_fixed;
 
 
-    *new {|backend = 0, dbSize = 478456, path = "/Users/anna/Desktop/MIRLC/"|
+    *new {|backend = 0, dbSize = 478456, path = "Platform.defaultTempDir"|
 		^super.new(backend, dbSize, path).initagent;
     }
 

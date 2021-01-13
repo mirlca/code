@@ -1,3 +1,9 @@
+// FILES NEEDED (you will use one directory for both JSON files and sounds downloaded from Freesound):
+
+// "model.JSON"
+// "pca.JSON"
+// "standardizer.JSON"
+
 
 // Check this diagram that represents how the MIRLCa performance interface works
 // "MIRLCa-performance-interface.jpg"
@@ -10,6 +16,8 @@
 // Please note: the three files "model.JSON", "pca.JSON" and "standardizer.JSON" should exist inside this folder
 
 p = "/Users/anna/Desktop/MIRLCa/"
+
+File.mkdir(p);      // This line will create the directory if it doesn't exist yet.
 
 // MIRLCa instantiation
 
@@ -42,7 +50,35 @@ a.similar(1)
 
 a.similar(2)
 
+// Once you have a sound cloud, you can explore applying effects to the group...
+
+a.lowpf
+
+// Or bypassing the effect...
+
+a.bypass
+
+// Change the speed...
+
+a.play(0.5)
+
+// Go back to normal...
+
+a.play
+
+// And fadeout the group...
+
+a.fadeout(10)
+
 // ....
 
 // As it currently stands, the similar function is constrained to have 10 candidates. You may find errors in the post window due to situations not matching the conditions... will fix them as soon as possible!
+
+
+// You can now change to another machine learning model, make sure to rename the JSON files:
+
+// "model-gerard.JSON" => "model.JSON"
+// "pca-gerard.JSON" => "pca.JSON"
+// "standardizer-gerard.JSON" => "standardizer.JSON"
+
 

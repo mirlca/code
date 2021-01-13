@@ -1,10 +1,12 @@
 
-// Before instantiating MIRLCa, it is recommended that you define what path you will be storing the generated files.
+// Before instantiating MIRLCa, it is recommended that you define what path you will be storing the generated JSON files.
 // The slash at the end is very important.
 // Please note: the directory should exist!
-// Please note: the three files "model.JSON", "pca.JSON" and "standardizer.JSON" should exist inside this folder
+// Please note for MIRLCa to work in general: the three files "model.JSON", "pca.JSON" and "standardizer.JSON" should exist inside this folder (see MIRLCa-intro-performance.scd for further details)
 
 p = "/Users/anna/Desktop/MIRLCa/"
+
+File.mkdir(p);      // This line will create the directory if it doesn't exist yet.
 
 // MIRLCa instantiation
 

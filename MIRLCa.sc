@@ -49,6 +49,13 @@ MIRLCa : MIRLCRep2 {
 		var test_dataset_name = \mlpclassify_testdata++randomnum.asSymbol;
 		var stand_test_dataset_name = \mlpclassify_stand_test_data++randomnum.asSymbol;
 		var test_predicted_label_dataset_name = \mlpclassify_predictlabels++randomnum.asSymbol;
+		var mlpclassify_trainingdata = \mlpclassify_trainingdata++randomnum.asSymbol;
+		var mlpclassify_labels = \mlpclassify_labels++randomnum.asSymbol;
+		var mlpclassify_testdata = \mlpclassify_testdata++randomnum.asSymbol;
+		var mlpclassify_testlabels = \mlpclassify_testlabels++randomnum.asSymbol;
+		var mlpclassify_standdata = \mlpclassify_standdata++randomnum.asSymbol;
+		var mlpclassify_stand_test_data = \mlpclassify_stand_test_data++randomnum.asSymbol;
+
 		is_training = False;
 		manual_dataset_dict = Dictionary.new;
 		training_dict = Dictionary();
@@ -62,23 +69,23 @@ MIRLCa : MIRLCRep2 {
 
 		fork {
 		training_dataset.free;
-		training_dataset = FluidDataSet(server,\mlpclassify_trainingdata); server.sync;
+		training_dataset = FluidDataSet(server, mlpclassify_trainingdata); server.sync;
 		training_label_dataset.free;
-		training_label_dataset = FluidLabelSet(server,\mlpclassify_labels); server.sync;
+		training_label_dataset = FluidLabelSet(server, mlpclassify_labels); server.sync;
 		test_dataset_fixed.free;
-		test_dataset_fixed = FluidDataSet(server,\mlpclassify_testdata); server.sync;
+		test_dataset_fixed = FluidDataSet(server, mlpclassify_testdata); server.sync;
 		test_label_dataset_fixed.free;
-		test_label_dataset_fixed = FluidLabelSet(server,\mlpclassify_testlabels); server.sync;
+		test_label_dataset_fixed = FluidLabelSet(server, mlpclassify_testlabels); server.sync;
 		test_dataset.free;
-		test_dataset = FluidDataSet(server,test_dataset_name); server.sync;
+		test_dataset = FluidDataSet(server, test_dataset_name); server.sync;
 		stand_dataset.free;
-		stand_dataset = FluidDataSet(server,\mlpclassify_standdata); server.sync;
+		stand_dataset = FluidDataSet(server, mlpclassify_standdata); server.sync;
 		stand_test_dataset_fixed.free;
-		stand_test_dataset_fixed = FluidDataSet(server,\mlpclassify_stand_test_data);
+		stand_test_dataset_fixed = FluidDataSet(server, mlpclassify_stand_test_data);
 		stand_test_dataset.free;
-		stand_test_dataset = FluidDataSet(server,stand_test_dataset_name); server.sync;
+		stand_test_dataset = FluidDataSet(server, stand_test_dataset_name); server.sync;
 		test_predicted_label_dataset.free;
-		test_predicted_label_dataset = FluidLabelSet(server,test_predicted_label_dataset_name); server.sync;
+		test_predicted_label_dataset = FluidLabelSet(server, test_predicted_label_dataset_name); server.sync;
 		standardizer.free;
 		standardizer = FluidStandardize(server); server.sync;
 		pca.free;

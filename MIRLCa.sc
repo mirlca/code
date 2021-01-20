@@ -38,6 +38,7 @@ MIRLCa : MIRLCRep2 {
 	var test_label_dataset_fixed;
 	var stand_dataset;
 	var stand_test_dataset_fixed;
+	var mode_training;
 
 
     *new {|backend = 0, dbSize = 478456, path = "Platform.defaultTempDir"|
@@ -299,8 +300,9 @@ MIRLCa : MIRLCRep2 {
 	} //--//
 
 
-	starttraining {
+	starttraining { | mode = "random" |
 
+		mode_training = mode;
 		if ( is_training == False, {
 			is_training = True;
 			// "start training".postln;
@@ -311,16 +313,38 @@ MIRLCa : MIRLCRep2 {
 				"Existing sound fading out...".postln;
 				this.fadeout_t;
 		});
-		// "give a random sound".postln;
-		this.giverandomsound();
-		postln("********************************************");
-		"Please wait until the sound has been downloaded...".postln;
-		postln("********************************************");
+
+		this.selectanswerbymode();
 
 	} //--//
 
+	trainid { |idnumber = 3333 |
+		this.givesoundbyid(idnumber);
+		postln("********************************************");
+		"Please wait until the sound has been downloaded before manually annotating it...".postln;
+		postln("********************************************");
+	}
+
+	selectanswerbymode {
+		if ( mode_training == "random", {
+			// "give a random sound".postln;
+			this.giverandomsound();
+			postln("********************************************");
+			"Please wait until the sound has been downloaded before manually annotating it...".postln;
+			postln("********************************************");
+
+		}, {
+			postln("********************************************");
+			"For the next sound: Please write: trainid(xxxx) where you need to replace xxxx with the id number".postln;
+			postln("********************************************");
+			// "Please wait until the sound has been downloaded before manually annotating it...".postln;
+			// postln("********************************************");
+		};
+		);
+	}
+
 	continuetraining {
-		this.starttraining();
+		this.starttraining( mode_training );
 	}
 
 
@@ -336,7 +360,7 @@ MIRLCa : MIRLCRep2 {
 			postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
 			postln("The sound IDs are: "++manual_dataset_dict.keys);
 			postln("********************************************");
-			this.giverandomsound();
+			this.selectanswerbymode();
 		}, {
 			"You need to start training first".postln;
 		});
@@ -356,7 +380,7 @@ MIRLCa : MIRLCRep2 {
 			postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
 			postln("The sound IDs are: "++manual_dataset_dict.keys);
 			postln("********************************************");
-			this.giverandomsound();
+			this.selectanswerbymode();
 		}, {
 			"You need to start training first".postln;
 		});
@@ -388,6 +412,36 @@ MIRLCa : MIRLCRep2 {
 
 		sndid_t = rrand (1, databaseSize);
 		// sndid_t = 329706; // This SoundID is for testing "analysis":null
+
+		this.getsoundfromfreesound (sndid_t);
+
+
+    } //--//
+
+
+	//------------------//
+    // QUERY BY ID
+    //------------------//
+	// This function gets 1 sound by ID, and plays it (ONLY for training)
+	givesoundbyid { | id = 3333 |
+
+
+		if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
+			"Fading out the previous sound...".postln;
+			this.fadeout_t;
+		});
+
+		// "then give a sound by ID".postln;
+		// "its descriptors are stored in a temp array".postln;
+
+		sndid_t = id;
+		// sndid_t = 329706; // This SoundID is for testing "analysis":null
+
+		this.getsoundfromfreesound (sndid_t);
+
+    } //--//
+
+	getsoundfromfreesound { |sndid_t = 3333 |
 
         backendClass.getSound ( sndid_t,
             { |f|
@@ -453,15 +507,20 @@ MIRLCa : MIRLCRep2 {
                     },
                     {
                         "Either SoundID or sound analysis does not exist".postln;
-						"I'm getting another sound...".postln;
-						this.giverandomsound();
+
+						if (mode_training == "random", {
+							"I'm getting another sound...".postln;
+							this.giverandomsound();
+						},{
+							"You should get another sound...".postln;
+							"Please write: trainid(xxxx) where you need to replace xxxx with the id number".postln;
+						}
+						);
+
                 } );
 
         } );
-
-
-
-    } //--//
+	}
 
 
 	stoptraining { |perc = 0.7 |

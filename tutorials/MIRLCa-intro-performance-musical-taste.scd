@@ -81,4 +81,11 @@ a.fadeout(10)
 // "pca-gerard.JSON" => "pca.JSON"
 // "standardizer-gerard.JSON" => "standardizer.JSON"
 
+// You can instantiate more than one instance of MIRLCa
+
+b = MIRLCa.new(path: p)
+
+b.random
+
+b.similar
 

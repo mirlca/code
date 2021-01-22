@@ -21,6 +21,7 @@ MIRLCRep2 {
 	var b0, b1, b2;
 	var fxlpf;
 	var effectson;
+    var playing;
 
 	var maxvol =0.2;// 0.07; // 0.2; // audio samples
 
@@ -44,12 +45,13 @@ MIRLCRep2 {
         databaseSize = dbSize;
         directoryPath = path;
 		effectson = 0;
+        playing = True;
 
 
         if(backend == 0){
             backendClass = FSSound;
             Freesound.authType = "token"; // default, only needed if you changed it
-            Freesound.token="<your_api_key>"; // important!: change it to own API key token
+            Freesound.token="<your_api_key>"; // change it to own API key token
         }{
             backendClass = FLSound;
         };
@@ -587,7 +589,7 @@ MIRLCRep2 {
 
 		t.sched(tempo, {
 
-			if (counter >= 0,
+			if (counter >= 0 && playing == True,
 				{
 					if ( bool == 1,
 						{
@@ -607,9 +609,15 @@ MIRLCRep2 {
 					tempo;
 				},
 				{
-					this.play(1);
-					"Done playauto".postln;
-					nil;
+                    if ( playing == True, {
+                        "Done playauto".postln;
+                        nil;
+                        this.play(1);
+                    }, {
+                        "Stopped playauto".postln;
+                        nil;
+                    });
+
 				}
 			);
 		});
@@ -626,7 +634,7 @@ MIRLCRep2 {
 
 		t.sched(tempo, {
 
-			if (counter >= 0.01,
+			if (counter >= 0.01 && playing == True,
 				{
 					this.play(speed);
 					"playing at: "+speed.postln;
@@ -635,9 +643,16 @@ MIRLCRep2 {
 					tempo;
 				},
 				{
-					this.stop;
-					"Done playdown".postln;
-					nil;
+                    if ( playing == True, {
+                        "Done playdown".postln;
+                        nil;
+                        this.stop;
+                    },
+                    {
+                       "Done playdown".postln;
+                       nil;
+                    }
+                    );
 				}
 			);
 		});
@@ -659,7 +674,7 @@ MIRLCRep2 {
 
 		t.sched(tempo, {
 			"tempo: "+tempo.postln;
-			if (counter >= 0,
+			if (counter >= 0 && playing == True,
 				{
 					if ( bool == 1,
 						{
@@ -679,9 +694,17 @@ MIRLCRep2 {
 					tempo;
 				},
 				{
-					this.play(1);
-					"Done playauto";
-					nil;
+                    if (playing == True, {
+                        "Done playauto";
+                        nil;
+                        this.play(1);
+                    }, {
+                        "Done playauto";
+                        nil;
+                    });
+
+
+
 				}
 			);
 		});
@@ -989,6 +1012,7 @@ MIRLCRep2 {
 	// This function fades out all synths with a smooth fade out
 
     fadeout {|release = 1.0|
+        playing = False;
 		sequential = False; // to avoid inconsistencies
 		postln("Number of sounds fading out: " ++ synths.size);
 		synths.size.do( { |index|

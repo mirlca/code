@@ -39,9 +39,8 @@ MIRLCa : MIRLCRep2 {
 	var stand_test_dataset_fixed;
 	var mode_training;
 
-	// change back to path = "Platform.defaultTempDir"
-    *new {|backend = 0, dbSize = 478456, path = "/Users/anna/Desktop/MIRLCa/"|
-		^super.new(backend, dbSize, path).initagent;
+    *new { | backend = 0, dbSize = 478456, path = "Platform.defaultTempDir", creditspathname |
+		^super.new(backend, dbSize, path, creditspathname).initagent;
     }
 
 	initagent {
@@ -130,12 +129,15 @@ MIRLCa : MIRLCRep2 {
 					postln ("This sound does not have similar_sounds information required by the MIRLCa agent. Please try another sound.");
 				}, {
 
-					index = metadata.size;
-					try { // try 2
-						file.write(snd["name"] + " by " + snd["username"] + snd["url"] + "\n");
-					}//end try 2
-					{ |error| [\catchFileWrite, error].postln };
-					metadata.add(index -> f);
+				index = metadata.size;
+				try { // try 2
+					file.open(creditsfilename,"a");
+					file.write(snd["name"] ++ " by " ++ snd["username"] ++ " (" ++ snd["url"] ++") licensed under " ++ snd["license"] + "\n");
+					file.close();
+				} //end try 2
+				{|error| [\catchFileWrite, error].postln }; // end catch error
+
+				metadata.add(index -> f);
 
 					if (size == 1, {
 						this.loadmetadata(size);
@@ -154,10 +156,6 @@ MIRLCa : MIRLCRep2 {
 				// Training is TRUE, only 1 sound at a time
 				index = 0;
 				// TODO: Write the files during training distinguishing	between good and bad sounds
-				/*try {
-					file.write(snd["name"] + " by " + snd["username"] + snd["url"] + "\n");
-				}//end try
-				{ |error| [\catchRandomMethod, error].postln }; // end catch error	*/
 				metadata.add(index -> f);
 				this.loadmetadata_t(1); // size = 1, only 1 sound at a time
 			}
@@ -473,7 +471,7 @@ MIRLCa : MIRLCRep2 {
 			// server.sync;
 			test_dataset.load(test_dataset_content); server.sync;
 			test_dataset.dump; server.sync;
-			// test_dataset.write(directoryPath ++ "mirlca_test_dataset.txt"); server.sync;
+			// test_dataset.write(directoryPath ++ "mirlca_test_dataset.txt");server.sync;
 			standardizer.transform(test_dataset, stand_test_dataset); server.sync;
 			// stand_test_dataset.write(directoryPath ++ "mirlca_standardizer.txt"); server.sync;
 			stand_test_dataset.dump; server.sync;
@@ -500,7 +498,8 @@ MIRLCa : MIRLCRep2 {
 				};
 				if (found == False, {("Only bad sounds were found from "++(candidates-1)++" candidates. Try another sound.").postln});
 				});
-				test_predicted_label_dataset.write(directoryPath ++ "test_predicted_label_dataset.txt"); server.sync;
+			// test_predicted_label_dataset.write(directoryPath ++ "test_predicted_label_dataset.txt");
+			    server.sync;
 
 		}; // fork
 
@@ -655,15 +654,15 @@ MIRLCa : MIRLCRep2 {
 			// server.sync;
 			test_dataset.load(test_dataset_content); server.sync;
 			test_dataset.dump; server.sync;
-			// test_dataset.write(directoryPath ++ "mirlca_test_dataset.txt"); server.sync;
+			// test_dataset.write(directoryPath ++ "mirlca_test_dataset.txt");server.sync;
 			standardizer.transform(test_dataset, stand_test_dataset); server.sync;
-			// stand_test_dataset.write(directoryPath ++ "mirlca_standardizer.txt"); server.sync;
+			// stand_test_dataset.write(directoryPath ++ "mirlca_standardizer.txt");server.sync;
 			stand_test_dataset.dump; server.sync;
 			pca.transform(stand_test_dataset, stand_test_dataset, {
 				"Done".postln;
 			}); server.sync;
 			stand_test_dataset.dump; server.sync;
-			// stand_test_dataset.write(directoryPath ++ "mirlca_pca.txt"); server.sync;
+			// stand_test_dataset.write(directoryPath ++ "mirlca_pca.txt");server.sync;
 			classifier.predict(stand_test_dataset, test_predicted_label_dataset, action:{"Test complete".postln}); server.sync;
 			// test_predicted_label_dataset.dump;
 			test_predicted_label_dataset.dump(action:{ |dict|

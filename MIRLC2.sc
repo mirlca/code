@@ -1,7 +1,11 @@
 // @new users, control the following customizable vars:
 // - Freesound.token = "<your_api_key>"
-// - path: replace current directory to your own directory to store downloaded sounds and record the text file with the credits, or change it to "/tmp/"
+// - path: replace current directory to your own directory to store downloaded sounds and record the text file with the credits, or change it to "Platform.defaultTempDir" or "/tmp/"
 // - debugging: True/False
+// For sound credits, you can pass an absolute path including the filename as an argument e.g. "/Users/anna/Desktop/credits/Freesound_credits.txt", otherwise it will generate a text file for each instance.
+// e.g.
+// p = "/Users/anna/Desktop/MIRLC/"; c ="/Users/anna/Desktop/credits/Freesound_credits.txt";
+// a = MIRLCRep2.new(path: p, creditspath: c)
 
 
 MIRLCRep2 {
@@ -22,14 +26,16 @@ MIRLCRep2 {
 	var fxlpf;
 	var effectson;
     var playing;
+	var creditsfilename;
+	var creditsfilepathname;
 
 	var maxvol =0.2;// 0.07; // 0.2; // audio samples
 
-    *new {|backend = 0, dbSize = 478456, path = "Platform.defaultTempDir"|
-        ^super.new.init(backend, dbSize, path)
+    *new {|backend = 0, dbSize = 478456, path = "Platform.defaultTempDir", creditspathname |
+        ^super.new.init(backend, dbSize, path, creditspathname)
     }
 
-    init {|backend, dbSize, path|
+    init {|backend, dbSize, path, creditspathname|
         server = Server.local;
         server.boot;
         metadata = Dictionary.new;
@@ -37,7 +43,7 @@ MIRLCRep2 {
         synths = Dictionary.new;
 		effects = Dictionary.new;
         translation = Dictionary.new;
-        debugging = True;
+        debugging = False; // True
         poolsizeold = 0;
         counter = 0;
         sequential = False;
@@ -46,20 +52,42 @@ MIRLCRep2 {
         directoryPath = path;
 		effectson = 0;
         playing = True;
-
+		creditsfilepathname = creditspathname;
+		date = Date.getDate;
 
         if(backend == 0){
-            backendClass = FSSound;
+			try {
+				backendClass = FSSound;
+			} // end try
+			{|error| [\catchFreesoundClass, error].postln };
+			try {
             Freesound.authType = "token"; // default, only needed if you changed it
             Freesound.token="<your_api_key>"; // change it to own API key token
+			} // end try
+			{|error| [\catchFreesoundToken, error].postln };
         }{
-            backendClass = FLSound;
+			try {
+				backendClass = FLSound;
+			} //end try
+			{|error| [\catchFlucomaSound, error].postln };
         };
 
-        date = Date.getDate;
-
-		file = File(directoryPath.standardizePath ++ date.stamp ++ "_credits" ++ ".txt","w");
-		file.write("Sound samples used:\n");
+		// Management of credits file
+		try {
+			if (creditsfilepathname != nil, {
+				creditsfilename = creditsfilepathname;
+			}, {
+				creditsfilename = directoryPath.standardizePath ++ date.stamp ++ "_credits" ++ ".txt";
+			});
+		} // end try
+		{|error| [\catchFileName, error].postln };
+		try {
+			file = File(creditsfilename,"a");
+			file.write("Sound samples used from Freesound.org:\n");
+			file.close;
+		} // end try
+		{|error| [\catchFileWrite, error].postln };
+		// end of management of credits file
 
        this.argstranslate;
 
@@ -113,7 +141,7 @@ MIRLCRep2 {
 			Out.ar(obs, sig*env*amp);
 		}).add;
 
-		SynthDef(\bitcrush, {
+		SynthDef(\bitcrush, { // The Decimator effect is an "Extension". TODO: Find a standalone solution.
 			arg ibs, obs, amp=0.4,
 			atk=0.02, sus=1, rel=0.1, crv=2, gate=1,
 			rate=44100, bit=8;
@@ -145,6 +173,64 @@ MIRLCRep2 {
 			sig = XFade2.ar(sig, delay, mix) * amp;
 			Out.ar(obs, sig);
 		}).add;
+
+			SynthDef(\distort, { // The CrossoverDistortion is an "Extension". TODO: Find a standalone solution.
+			arg ibs, obs, amp=1,
+			atk=0.1, sus=1, rel=0.2, crv=2, gate=1, ampfx=0.01, smooth=0.01;
+			var source, sig, env;
+			env = EnvGen.ar(Env.asr(atk, sus, rel, crv), gate);
+			source = In.ar([ibs, ibs]);
+			sig = CrossoverDistortion.ar(source, ampfx, smooth);
+			Out.ar(obs, sig*env*amp);
+		}).add;
+
+		SynthDef(\vibrato, {
+			arg ibs, obs, amp=1,
+			atk=0.1, sus=1, rel=0.2, crv=2, gate=1, maxdelaytime=0.01;
+			var source, sig, env;
+			env = EnvGen.ar(Env.asr(atk, sus, rel, crv), gate);
+			source = In.ar([ibs, ibs]);
+			// sig = DelayC.ar(source, maxdelaytime, delaytime);
+			sig = DelayC.ar(source, maxdelaytime, SinOsc.ar(Rand(5,10),0,0.0025,0.0075));
+			Out.ar(obs, sig*env*amp);
+		}).add;
+
+
+		SynthDef(\compress, {
+			arg ibs, obs, amp=1,
+			atk=0.1, sus=1, rel=0.2, crv=2, gate=1, gain=1.5, threshold=0.5;
+			var source, sig, env;
+			env = EnvGen.ar(Env.asr(atk, sus, rel, crv), gate);
+			source = In.ar([ibs, ibs]);
+			// sig = DelayC.ar(source, maxdelaytime, delaytime);
+			sig = CompanderD.ar(gain*source, threshold, 1, 0.5);
+			Out.ar(obs, sig*env*amp);
+		}).add;
+
+
+		/*SynthDef(\flanger, {
+			arg ibs, obs, amp=1,
+			atk=0.1, sus=1, rel=0.2, crv=2, gate=1, maxdelaytime=0.02, flangefreq=0.1, fdback=0.1;
+			var source, sig, env;
+			env = EnvGen.ar(Env.asr(atk, sus, rel, crv), gate);
+			source = In.ar([ibs, ibs]);
+			sig = DelayN.ar(source, maxdelaytime, SinOsc.kr(flangefreq,0,0.005,0.005));
+
+			Out.ar(obs, sig*env*amp);
+		}).add;*/
+
+
+/*		SynthDef(\limit, {
+			arg ibs, obs, amp=1,
+			atk=0.1, sus=1, rel=0.2, crv=2, gate=1, gain=1;
+			var source, sig, env;
+			env = EnvGen.ar(Env.asr(atk, sus, rel, crv), gate);
+			source = In.ar([ibs, ibs]);
+			// sig = DelayC.ar(source, maxdelaytime, delaytime);
+			sig = Limiter.ar(gain*source, 0.99, 0.01);
+			Out.ar(obs, sig*env*amp);
+		}).add;*/
+
 
        //this.scope;
 
@@ -203,13 +289,12 @@ MIRLCRep2 {
                     buffers.add(index -> buf);
             });
         });
-    }
+    } //--//
 
     //---------------------------------------------------//
     //QUERIES TO SEED A POOL OF SOUNDS (TEXT, CONTENT)
     //---------------------------------------------------//
     // FUNCTIONS: random, tag, content
-
 
     //------------------//
     // GET SOUND BY ID
@@ -221,76 +306,108 @@ MIRLCRep2 {
 		// If (size > 1 && sound exists in the folder) // in the future store the metadata as well and so then if (size > 1)
 		// just copy the info from previous
 		// else:
+
         backendClass.getSound(id,
             { |f|
                 //available metadata: "id","url","name","tags","description","geotag","created","license","type","channels","filesize""bitrate","bitdepth","duration","samplerate","username","Jovica","pack","pack_name","download","bookmark","previews","preview-lq-mp3","preview-hq-ogg","preview-hq-mp3","images","num_downloads","avg_rating","num_ratings","rate":,"comments","num_comments","comment","similar_sounds","analysis","analysis_frames","analysis_stats"
-                snd = f;
-                index = metadata.size;
-                file.write(snd["name"] + " by " + snd["username"] + snd["url"] + "\n");
+				// ways of printing info:
+				// "name".postln; or snd["name"].postln;
+				// this.printmetadata;
 
-				/*"name".postln;
-				snd["name"].postln;*/
+				snd = f;
 
-                metadata.add(index -> f);
+				try {
+				if (snd["detail"]=="Not found.", {
+					"Sound not found in the database. Try another sound.".postln;
+					}, {
+						if ( debugging == True,{"Sound exists in the database.".postln;});
+					index = metadata.size;
 
-                if (size == 1) {
-                    this.loadmetadata(size);
-                    //this.printmetadata;
-                }{ // size > 1
-                    if ( (metadata.size - poolsizeold) == size, // need to wait until asynchronous call is ready! once all sounds are added in the dictionary, they can be retrieved
-                        {
+					metadata.add(index -> f);
+
+					if ( size == 1, {
+						this.loadmetadata(size);
+					},{ // size > 1
+						if ( (metadata.size - poolsizeold) == size, // need to wait until asynchronous call is ready! once all sounds are added in the dictionary, they can be retrieved
+						{
                             this.loadmetadata(size);
-                            //this.printmetadata;
                         }
                     );
-                }
-        } );
+				}); // end if
+
+				try { // try 2
+					file.open(creditsfilename,"a");
+					file.write(snd["name"] ++ " by " ++ snd["username"] ++ " (" ++ snd["url"] ++") licensed under " ++ snd["license"] + "\n");
+					file.close();
+				} //end try 2
+				{|error| [\catchFileWrite, error].postln }; // end catch error
+
+			} ); // end of if (snd["detail"]=="Not found." vs sound found
+			}//end try
+		{|error| [\catchRandomMethod, error].postln }; // end catch error
+		});
+
     } //--//
 
     //------------------//
     // QUERY BY RANDOM
     //------------------//
     // This function gets [1..n] sounds by random, and plays them
+	// Previously was checking whether the sound existed with snd["detail"] != nil but it seems to work better snd["detail"]=="Not found."
     random { |size = 1|
 
-        // if ( debugging == True, {postln("Sounds selected by random: " ++ size);} );
+		var sndid;
+
+        if ( debugging == True, {postln("Sounds selected by random: " ++ size);} );
+
         sndid = rrand (1, databaseSize);
+
+		try {
         backendClass.getSound ( sndid,
             { |f|
 
-                snd = f;
+				snd = f;
 
-                if ( snd["detail"] == nil,
+				try { //try2
+                if ( snd["detail"]=="Not found.",
+                    {
+						if ( debugging == True, {"SoundID does not exist".postln;} );
+						"Sound not found in the database. Getting another sound.".postln;
+                        this.random(size);
+                    },
                     {
                         if ( debugging == True, {
                             postln("potential sound candidate: ");
                             snd["name"].postln;
+							postln("counter value is: " + counter);
                         });
-                        postln("counter value is: " + counter);
-                        counter = counter + 1;
+
+                        counter = counter + 1; // adding one sound to the counter in a recursive fashion
                         if (size == 1,
                             {
                                 this.id(sndid, size);
                             },
                             {//size > 1
-                                //this.id(sndid, size);
-                                postln("group size is greater than 1");
-                                postln("( counter - size ): " ++ ( counter - size ));
+								if ( debugging == True, {
+									this.id(sndid, size);
+									postln("group size is greater than 1");
+									postln("( counter - size ): " ++ ( counter - size ));
+									}); // end if debugging
+
                                 if ( counter <= size ,
-                                    //if ( (metadata.size - poolsizeold - size) < 0 ,
                                     {
                                         this.id(sndid, size);
                                         if ( counter < size, { this.random(size); } );
-                                    }
+									}
                                 );
                             }
                         );
-                    },
-                    {
-                        if ( debugging == True, {"SoundID does not exist".postln;} );
-                        this.random(size);
                 } );
+				}//end try2
+				{|error| [\catchRandomMethod_snd, error].postln };
         } );
+		}//end try
+		{|error| [\catchRandomMethod, error].postln };
     } //--//
 
     //------------------//
@@ -302,6 +419,8 @@ MIRLCRep2 {
         if ( debugging == True, {
             postln("Sounds selected by tag: " ++ size);
         });
+
+		try {
         backendClass.textSearch(query: tag, params: ('page': 1),
             action: { |p|
                 size.do { |index|
@@ -317,6 +436,8 @@ MIRLCRep2 {
                 this.id(snd.id, 1); // so that each sound is loaded & directly played
                 }
 		    });
+			}//end try
+		{|error| [\catchTagMethod, error].postln };
     } //--//
 
 
@@ -330,6 +451,8 @@ MIRLCRep2 {
           { fconcat = this.gettranslation(feature.asSymbol)++fvalue; },
           { fconcat = fvalue });
         fxconcat = this.gettranslation(fx.asSymbol) ++ this.gettranslation(fxvalue);
+
+		try {
         backendClass.contentSearch(
             target: fconcat,
             filter: fxconcat,
@@ -351,6 +474,8 @@ MIRLCRep2 {
                 }
             }
         );
+		}//end try
+		{|error| [\catch, error].postln };
     } //--//
 
 	pitch {|size = 1, fvalue = 440, fx = 'conf', fxvalue = 'lo'|
@@ -391,6 +516,7 @@ MIRLCRep2 {
 
         target = metadata[targetnumsnd];  // before: metadata[targetnumsnd - 1];
 
+		try {
         target.getSimilar(
             action: { |p|
                 size.do { |index|
@@ -408,6 +534,9 @@ MIRLCRep2 {
                     this.id(snd.id, 1); // so that each sound is loaded directly played
                 }
         });
+		}//end try
+		{|error| [\catchSimilarMethod, error].postln };
+
 
     } //--//
 
@@ -863,6 +992,118 @@ MIRLCRep2 {
     } //--//
 
 
+	//------------------//
+    // Distortion
+    //------------------//
+    // This function applies a distortion
+    distort { | ampfx = 0.1 |
+
+		effectson = 1;
+        size = synths.size;
+        size.do( { |index|
+            synths[index].set(\out, b0);
+            this.printsynth(index);
+        });
+
+		if ( effects.size>0,
+			{
+				effects[0].free;
+			}
+		);
+
+		effects.add (0 -> Synth.new(\distort, [\obs, 0, \ibs, b0], g1));
+    } //--//
+
+
+	//------------------//
+    // Vibrato
+    //------------------//
+    // This function applies a phaser
+    vibrato { | maxdelaytime = 0.01 |
+
+		effectson = 1;
+        size = synths.size;
+        size.do( { |index|
+            synths[index].set(\out, b0);
+            this.printsynth(index);
+        });
+
+		if ( effects.size>0,
+			{
+				effects[0].free;
+			}
+		);
+
+		effects.add (0 -> Synth.new(\vibrato, [\obs, 0, \ibs, b0], g1));
+    } //--//
+
+	//------------------//
+    // Flanger
+    //------------------//
+    // This function applies a phaser
+    /*flanger { | maxdelaytime = 0.2 |
+
+		effectson = 1;
+        size = synths.size;
+        size.do( { |index|
+            synths[index].set(\out, b0);
+            this.printsynth(index);
+        });
+
+		if ( effects.size>0,
+			{
+				effects[0].free;
+			}
+		);
+
+		effects.add (0 -> Synth.new(\flanger, [\obs, 0, \ibs, b0], g1));
+    }*/ //--//
+
+	//------------------//
+    // Compression
+    //------------------//
+    // This function applies a compressor
+    compress { | threshold = 0.5 |
+
+		effectson = 1;
+        size = synths.size;
+        size.do( { |index|
+            synths[index].set(\out, b0);
+            this.printsynth(index);
+        });
+
+		if ( effects.size>0,
+			{
+				effects[0].free;
+			}
+		);
+
+		effects.add (0 -> Synth.new(\compress, [\obs, 0, \ibs, b0], g1));
+    } //--//
+
+
+	//------------------//
+    // Limiter
+    //------------------//
+    // This function applies a limiter
+   /* limit { | gain = 1 |
+
+		effectson = 1;
+        size = synths.size;
+        size.do( { |index|
+            synths[index].set(\out, b0);
+            this.printsynth(index);
+        });
+
+		if ( effects.size>0,
+			{
+				effects[0].free;
+			}
+		);
+
+		effects.add (0 -> Synth.new(\limit, [\obs, 0, \ibs, b0], g1));
+    } *///--//
+
 
     //------------------//
     // SEQUENCE
@@ -1014,10 +1255,20 @@ MIRLCRep2 {
     fadeout {|release = 1.0|
         playing = False;
 		sequential = False; // to avoid inconsistencies
-		postln("Number of sounds fading out: " ++ synths.size);
-		synths.size.do( { |index|
-			synths[index].set(\gate, 0, \rel, release, \da, 2);
+
+		if ( debugging == True,{
+			postln("Number of sounds fading out: " ++ synths.size);
 		});
+
+
+		synths.size.do( { |index|
+			try {
+				synths[index].set(\gate, 0, \rel, release, \da, 2);
+			} // try
+			{|error| [\catchFadeout, error].postln };
+		});
+
+
     } //--//
 
 
@@ -1153,7 +1404,6 @@ MIRLCRep2 {
     //------------------//
     // This function is activated when stopping the code / recompiling / etc.
     cmdPeriod {
-        file.close;
         currentEnvironment.clear;
     } //--//
 
@@ -1250,6 +1500,22 @@ MIRLCRep2 {
         this.printsynths;
     } //--//
 
+    //------------------//
+    // CREDITS
+    //------------------//
+    // This function is activated when stopping the code / recompiling / etc.
+    credits {
+		var listcredits;
+		try {
+			file.open(creditsfilename,"r");
+			listcredits = file.readAllString;
+			file.close();
+			postln("********************************");
+			listcredits.postln;
+			postln("********************************");
+		} //end try
+		{|error| [\catchFileWrite, error].postln }; // end catch error
+    } //--//
 
 }
 

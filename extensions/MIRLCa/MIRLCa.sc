@@ -329,7 +329,7 @@ MIRLCa : MIRLCRep2 {
 		var sndid;
 
         if ( debugging == True, { postln("INFO: Sounds selected by random: " ++ size);} );
-
+		postln("INFO: Looking for a 'good' random sound...");
 		postln("INFO: The number of candidates for the best random sound is: " ++ cand);
 	    postln("INFO: The larger the number, the more time it will take. Be patient.");
 
@@ -494,15 +494,15 @@ MIRLCa : MIRLCRep2 {
 				// server.sync;
 				test_dataset.load(test_dataset_content); server.sync;
 				test_dataset.dump; server.sync;
-				// test_dataset.write(directoryPath ++ "mirlca_test_dataset.txt");server.sync;
+				// test_dataset.write(modelfilepath ++ "mirlca_test_dataset.txt");server.sync;
 				standardizer.transform(test_dataset, stand_test_dataset); server.sync;
-				// stand_test_dataset.write(directoryPath ++ "mirlca_standardizer.txt"); server.sync;
+				// stand_test_dataset.write(modelfilepath ++ "mirlca_standardizer.txt"); server.sync;
 				stand_test_dataset.dump; server.sync;
 				pca.transform(stand_test_dataset, stand_test_dataset, {
 					// "Done".postln;
 				}); server.sync;
 				stand_test_dataset.dump; server.sync;
-				// stand_test_dataset.write(directoryPath ++ "mirlca_pca.txt"); server.sync;
+				// stand_test_dataset.write(modelfilepath ++ "mirlca_pca.txt"); server.sync;
 				classifier.predict(stand_test_dataset, test_predicted_label_dataset, action:{"Test complete".postln}); server.sync;
 				// test_predicted_label_dataset.dump;
 				test_predicted_label_dataset.dump(action:{ |dict|
@@ -519,7 +519,7 @@ MIRLCa : MIRLCRep2 {
 					};
 					if (found == False, {("INFO: Only bad sounds were found from "++(candidates-1)++" candidates.\nTry another sound.").postln});
 				});
-				// test_predicted_label_dataset.write(directoryPath ++ "test_predicted_label_dataset.txt");
+				// test_predicted_label_dataset.write(modelfilepath ++ "test_predicted_label_dataset.txt");
 				server.sync;
 
 			}); // End IF temp_dict.isNil
@@ -701,7 +701,7 @@ MIRLCa : MIRLCRep2 {
 			is_training = True;
 			// "start training".postln;
 		}, {
-			// "you are training already".postln;
+			"INFO: You are in training mode already".postln;
 		});
 		/*if (sndid_old_t.notNil && (sndid_t == sndid_old_t), {
 				"Existing sound fading out...".postln;
@@ -719,10 +719,16 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to request a sound by ID to be annotated.
 
 	trainid { |idnumber = 3333 |
-		this.givesoundbyid(idnumber);
-		postln("********************************************");
-		"Please wait until the sound has been downloaded before manually annotating it...".postln;
-		postln("********************************************");
+
+		if ( is_training == True, {
+			this.givesoundbyid(idnumber);
+			postln("********************************************");
+			"Please wait until the sound has been downloaded before manually annotating it...".postln;
+			postln("********************************************");
+		}, {
+			"INFO: You should call the method 'starttraining' first".postln;
+		});
+
 	} //-//
 
     //------------------//
@@ -731,10 +737,16 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to request a random sound to be annotated.
 
 	trainrand { |idnumber = 3333 |
-		this.giverandomsound();
-		postln("********************************************");
-		"Please wait until the sound has been downloaded before manually annotating it...".postln;
-		postln("********************************************");
+
+		if ( is_training == True, {
+			this.giverandomsound();
+			postln("********************************************");
+			"Please wait until the sound has been downloaded before manually annotating it...".postln;
+			postln("********************************************");
+		}, {
+			"INFO: You should call the method 'starttraining' first".postln;
+		});
+
 	} //-//
 
     //------------------//
@@ -769,6 +781,7 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to continue training in case it has been paused or stopped
 
 	continuetraining { | mode |
+		is_training==True;
 		this.starttraining( mode_training );
 	} //-//
 
@@ -854,14 +867,37 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to show status information about the dataset in the training mode.
 
 	showinfo {
+		var goodsounds;
+		var badsounds;
+		var dataset = manual_dataset_dict;
 		if ( is_training==True , {
-			postln("You are in training mode");
+			postln("INFO: You are in training mode.");
 			postln("********************************************");
-			postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
-			postln("The sound IDs are: "++manual_dataset_dict.keys);
+			postln("You have " ++ dataset.size ++ " sounds in your dataset");
+			postln("The sound IDs are: "++ dataset.keys);
+			postln("The values are: "++ dataset.values);
+			dataset.values.select({ |x| x.postln; true});
+			goodsounds = dataset.values.select({ |x| x[1]=="good"}).size;
+			postln("Good sounds: " ++ goodsounds);
+			badsounds = dataset.size - goodsounds;
+			postln("Bad sounds: " ++ badsounds);
+			// dataset.values.select({ |x| x[1]=='bad'}).postln;
+			/*manual_dataset_dict.keysValuesDo{ |k,v|
+				postln("key: "++k);
+				postln("value: "++v);
+				postln("value: "++v[1]);
+				goodsounds = v[1].select({ |x| x[0]=='good'}).size;
+				postln("Good sounds: " ++ goodsounds);
+				badsounds = manual_dataset_dict.size - goodsounds;
+				postln("Bad sounds: " ++ badsounds);
+			};*/
+			// goodsounds = manual_dataset_dict.select({ |x| x[0]=='good'}).size;
+			// postln("Good sounds: " ++ goodsounds);
+			// badsounds = manual_dataset_dict.size - goodsounds;
+			// postln("Bad sounds: " ++ badsounds);
 			postln("********************************************");
 		}, {
-			postln("You are in performance mode");
+			postln("INFO: You are in performance mode.");
 		});
 	} //-//
 
@@ -871,10 +907,13 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to pause the training. This is a deprecated function since it is not needed anymore since the training by random is also manual (and not automatic as before).
 
 	pause {
-		postln("INFO: Process paused.");
-		if ( sndid_old_t.notNil && (sndid_t == sndid_old_t ), {
-			    postln("INFO: Fading out the previous sound...");
+		if (is_training==True, {
+			postln("INFO: Deprecated function.");
+			postln("INFO: Process paused.");
+			if ( sndid_old_t.notNil && (sndid_t == sndid_old_t ), {
+				postln("INFO: Fading out the previous sound...");
 				this.fadeout_t;
+			});
 		});
 	} //-//
 
@@ -1023,21 +1062,26 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Private function that reminds the user about available methods for training
 
 	messagestraining {
-		postln("********************************************");
-		"You are in training mode.".postln;
-		"You need to request for a new sound and then tell if you like it or not.".postln;
-		postln("(1)");
-		"To get a new random sound...".postln;
-		"Please write: [namevariable].trainrand".postln;
-		"To get a new sound by ID...".postln;
-		"Please write: [namevariable].trainid(xxxx)".postln;
-		"where you need to replace xxxx with the Freesound ID number".postln;
-		postln("(2)");
-		"Please wait until the sound has been downloaded before manually annotating it...".postln;
-		"If you like the sound, please write: [namevariable].ok".postln;
-		"If you don't like the sound, please write: [namevariable].ko".postln;
-		"If you want to skip the sound, please write: [namevariable].skip".postln;
-		postln("********************************************");
+
+		if (is_training==True, {
+
+			postln("********************************************");
+			"You are in training mode.".postln;
+			"You need to request for a new sound and then tell if you like it or not.".postln;
+			postln("(1)");
+			"To get a new random sound...".postln;
+			"Please write: [namevariable].trainrand".postln;
+			"To get a new sound by ID...".postln;
+			"Please write: [namevariable].trainid(xxxx)".postln;
+			"where you need to replace xxxx with the Freesound ID number".postln;
+			postln("(2)");
+			"Please wait until the sound has been downloaded before manually annotating it...".postln;
+			"If you like the sound, please write: [namevariable].ok".postln;
+			"If you don't like the sound, please write: [namevariable].ko".postln;
+			"If you want to skip the sound, please write: [namevariable].skip".postln;
+			postln("********************************************");
+		});
+
 	}
 
 	//------------------//
@@ -1171,12 +1215,12 @@ MIRLCa : MIRLCRep2 {
 			{ |error| [\catchFileWriteModel, error].postln }; // end catch error
 
 			try {
-				standardizer.write(directoryPath ++ "standardizer-new.JSON");
+				standardizer.write( modelfilepath ++ "standardizer-new.JSON");
 			}
 			{ |error| [\catchFileWriteStandardizer, error].postln }; // end catch error
 
 			try {
-				pca.write(directoryPath ++ "pca-new.JSON");
+				pca.write( modelfilepath ++ "pca-new.JSON");
 			}
 			{ |error| [\catchFileWritePCA, error].postln }; // end catch error
 
@@ -1196,10 +1240,12 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to save the machine learning model as JSON files for a later follow-up.
 
 	archive {
+		postln("INFO: This function will archive the dictionary for future training.");
 		postln(manual_dataset_dict);
 	} //-//
 
 	load {
+		postln("INFO: This function will load the dictionary for follow-up training.");
 		postln("********************************************");
 		postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
 		postln("The sound IDs are: "++manual_dataset_dict.keys);

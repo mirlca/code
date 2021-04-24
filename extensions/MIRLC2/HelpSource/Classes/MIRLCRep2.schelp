@@ -1,0 +1,525 @@
+TITLE:: MIRLCRep2
+summary:: (put short description here)
+categories:: Music Information Retrieval
+related:: Classes/MIRLCa, Freesound
+
+DESCRIPTION::
+MIRLC2 is an incremental improvement over MIRLC. For the moment it includes the MIRLCRep2 module, which is designed for repurposing audio samples from Freesound.org using and expanding the link::Classes/Freesound:: quark for SuperCollider. It provides improved methods for querying and some automatic methods. It can also apply effects to the downloaded sounds.
+
+CLASSMETHODS::
+
+METHOD:: new
+Creates a new instance.
+
+ARGUMENT:: backend
+An link::Classes/Integer:: indicating the database used, default 0 to use the Freesound database.
+
+ARGUMENT:: dbSize
+An link::Classes/Integer:: indicating the size of the database in terms of the total number of sounds of the Freesound database.
+
+ARGUMENT:: path
+A link::Classes/String:: containing the path name where the sounds are downloaded (write mode).
+
+ARGUMENT:: creditsPath
+A link::Classes/String:: containing the path name where the sound credits list is stored (write mode).
+
+
+INSTANCEMETHODS::
+
+subsection:: Querying & Retrieving methods
+
+METHOD:: id
+Returns a sound by its Freesound ID number.
+
+ARGUMENT:: id
+An link::Classes/Integer:: indicating the Freesound ID number of a sound.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved. This is only used for internal purposes as only one sound is expected to be returned from a Freesound ID.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: random
+Returns a sound by random.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: tag
+Returns a sound by a defined tag.
+
+ARGUMENT:: tag
+A link::Classes/String:: that indicates the tag.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: similar
+Returns a similar sound from a target sound.
+
+ARGUMENT:: targetnumsnd
+An link::Classes/Integer:: indicating the index number of the sound in the group.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: content
+Returns a sound by content search that is defined by a target sound (feature) and filter.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: feature
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the feature value (CODE::fvalue::) and defines the characteristics of a target sound. Only a few options are available in the internal dictionary. Check the Freesound API for the full list of options:
+
+    definitionlist::
+	 ## STRONG::"dur"::
+	 || Default value. Returns CODE::".sfx.duration:":: from the Freesound API.
+	 ## STRONG::"pitch"::
+	 || Returns CODE::".lowlevel.pitch.mean:":: from the Freesound API.
+	 ## STRONG::"dissonance"::
+	 || Returns CODE::".lowlevel.dissonance.mean:":: from the Freesound API.
+	 ## STRONG::"bpm"::
+	 || Returns CODE::".rhythm.bpm:":: from the Freesound API.
+    ::
+
+ARGUMENT:: fvalue
+An link::Classes/Integer:: or link::Classes/Float:: that indicates the value of the argument CODE::feature::. Default value is 1 that pairs with the default value of CODE::feature::, which is CODE::dur::. Check the Freesound API for the full list of values.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Only a few options are available in the internal dictionary. Check the Freesound API for the full list of options:
+
+    definitionlist::
+	 ## STRONG::"key"::
+	 || Default value. Returns CODE::"tonal.key_key:":: from the Freesound API.
+	 ## STRONG::"scale"::
+	 || Returns CODE::"tonal.key_scale:":: from the Freesound API.
+	 ## STRONG::"conf"::
+	 || Returns CODE::".lowlevel.pitch_instantaneous_confidence.mean:":: from the Freesound API.
+	 ## STRONG::"mfcc0"::
+	 || Returns CODE::"lowlevel.mfcc.mean[0]:":: from the Freesound API.
+	 ## STRONG::"mfcc1"::
+	 || Returns CODE::"lowlevel.mfcc.mean[1]:":: from the Freesound API.
+	 ## STRONG::"mfcc4"::
+	 || Returns CODE::"lowlevel.mfcc.mean[4]:":: from the Freesound API.
+    ::
+
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Only a few options are available in the internal dictionary and are relevant to certain filters. Check the Freesound API for the full list of values:
+
+    definitionlist::
+	 ## STRONG::"Asharp"::
+	 || Default value. Returns CODE::"\"ASharp\"":: from the Freesound API.
+	 ## STRONG::"A"::
+	 || Returns CODE::"\"A\"":: from the Freesound API.
+	 ## STRONG::"B"::
+	 || Returns CODE::"\"B\"":: from the Freesound API.
+	 ## STRONG::"C"::
+	 || Returns CODE::"\"C\"":: from the Freesound API.
+	 ## STRONG::"D"::
+	 || Returns CODE::"\"D\"":: from the Freesound API.
+	 ## STRONG::"E"::
+	 || Returns CODE::"\"E\"":: from the Freesound API.
+	 ## STRONG::"F"::
+	 || Returns CODE::"\"F\"":: from the Freesound API.
+	 ## STRONG::"G"::
+	 || Returns CODE::"\"G\"":: from the Freesound API.
+	 ## STRONG::"major"::
+	 || Returns CODE::"\"major\"":: from the Freesound API.
+	 ## STRONG::"minor"::
+	 || Returns CODE::"\"minor\"":: from the Freesound API.
+	 ## STRONG::"hi"::
+	 || Returns CODE::"[0.8 TO 1]":: from the Freesound API.
+	 ## STRONG::"lo"::
+	 || Returns CODE::"[0 TO 0.2]":: from the Freesound API.
+	 ## STRONG::"bypass"::
+	 || Returns CODE::"[0 TO 1]":: from the Freesound API.
+	 ## STRONG::"1720"::
+	 || Returns CODE::"[17 TO 20]":: from the Freesound API.
+	 ## STRONG::"2040"::
+	 || Returns CODE::"[20 TO 40]":: from the Freesound API.
+	 ## STRONG::"neg"::
+	 || Returns CODE::"[-1124 TO -1121]":: from the Freesound API.
+    ::
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: diss
+Returns a sound based on the dissonance feature.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: fvalue
+An link::Classes/Integer:: or link::Classes/Float:: that is paired with the dissonance feature and indicates the value of the feature CODE::"dissonance"::. Default value is 1.0. Check the Freesound API for the full list of values.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Default value is CODE::'conf'::. Only a few options are available in the internal dictionary. See the content method for details. Check the Freesound API for the full list of options.
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Default value is CODE::'lo'::. Only a few options are available in the internal dictionary and are relevant to certain filters. See the content method for details. Check the Freesound API for the full list of values.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: dur
+Returns a sound based on the duration feature.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: fvalue
+An link::Classes/Integer:: or link::Classes/Float:: that is paired with the duration feature and indicates the value of the feature CODE::"dur"::. Default value is 10 seconds. Check the Freesound API for the full list of values.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Default value is CODE::'conf'::. Only a few options are available in the internal dictionary. See the content method for details. Check the Freesound API for the full list of options.
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Default value is CODE::'lo'::. Only a few options are available in the internal dictionary and are relevant to certain filters. See the content method for details. Check the Freesound API for the full list of values.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: bpm
+Returns a sound based on the BPM feature.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: fvalue
+An link::Classes/Integer:: or link::Classes/Float:: that is paired with the BPM feature and indicates the value of the feature CODE::"bpm"::. Default value is 60. Check the Freesound API for the full list of values.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Default value is CODE::'conf'::. Only a few options are available in the internal dictionary. See the content method for details. Check the Freesound API for the full list of options.
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Default value is CODE::'lo'::. Only a few options are available in the internal dictionary and are relevant to certain filters. See the content method for details. Check the Freesound API for the full list of values.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: pitch
+Returns a sound based on the pitch feature.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: fvalue
+An link::Classes/Integer:: or link::Classes/Float:: that is paired with the pitch feature and indicates the value of the feature CODE::"pitch"::. Default value is 440 Hz. Check the Freesound API for the full list of values.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Default value is CODE::'conf'::. Only a few options are available in the internal dictionary. See the content method for details. Check the Freesound API for the full list of options.
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Default value is CODE::'lo'::. Only a few options are available in the internal dictionary and are relevant to certain filters. See the content method for details. Check the Freesound API for the full list of values.
+
+returns:: A link::Classes/FSSound:: sound
+
+METHOD:: filter
+Returns a similar sound from a target sound filtered by a filter.
+
+ARGUMENT:: targetnumsnd
+An link::Classes/Integer:: indicating the index number of the target sound in the group of sounds.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: fx
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter value (CODE::fxvalue::) and defines the characteristics of a filter when retrieving the target sound. Default value is CODE::'conf'::. Only a few options are available in the internal dictionary. See the content method for details. Check the Freesound API for the full list of options.
+
+ARGUMENT:: fxvalue
+A link::Classes/Symbol:: in an internal dictionary or a link::Classes/String:: from the Freesound API, which pairs with the filter  (CODE::fx::) and indicates the range of the filter. Default value is CODE::'bypass'::. Only a few options are available in the internal dictionary and are relevant to certain filters. See the content method for details. Check the Freesound API for the full list of values.
+
+returns:: A link::Classes/FSSound:: sound
+
+subsection:: Play methods
+
+METHOD:: play
+Plays the sounds of the same group at the same rate
+
+ARGUMENT:: rate
+An link::Classes/Integer:: indicating the rate
+
+METHOD:: solo
+Mutes all the sounds except for the selected sound from a given group.
+
+ARGUMENT:: targetnumsnd
+An link::Classes/Integer:: indicating the index number of the sound in the group.
+
+METHOD:: mute
+Mutes a selected sound from a given group.
+
+ARGUMENT:: targetnumsnd
+An link::Classes/Integer:: indicating the index number of the sound in the group.
+
+METHOD:: muteall
+Mutes all the sounds from a given group.
+
+METHOD:: stop
+Stops the sound of the group of sounds (sets the amplitude to zero).
+
+METHOD:: sequence
+Plays sounds sequentially, one after the other.
+
+METHOD:: parallel
+Plays sounds in parallel, all of them looping at the same time.
+
+METHOD:: volume
+Sets the volume of the group of sounds within a range 0..1.
+
+ARGUMENT:: vol
+A link::Classes/Float:: indicating the volume value.
+
+METHOD:: fadeout
+Fades out all synths of a group of sounds with a smooth fade out.
+
+ARGUMENT:: release
+Release time in seconds.
+
+subsection:: Automatic play methods
+
+METHOD:: cmdPeriod
+Activated when stopping the code, stops all sounds.
+
+METHOD:: playauto
+Plays the sounds of the same group several times at different rates that are changed on every certain interval.
+
+ARGUMENT:: times
+An link::Classes/Integer:: that indicates the number of times that the rate will be changed.
+
+ARGUMENT:: tempo
+An link::Classes/Integer:: that indicates duration of the interval.
+
+METHOD:: playautodown
+Plays the sounds of the same group several times at different rates that increasingly slow down that are changed on every certain interval.
+
+ARGUMENT:: startspeed
+An link::Classes/Integer:: that indicates the start rate of the sound.
+
+ARGUMENT:: endspeed
+An link::Classes/Integer:: that indicates the end rate of the sound.
+
+ARGUMENT:: times
+An link::Classes/Integer:: that indicates the number of times that the rate will be changed.
+
+ARGUMENT:: tempo
+An link::Classes/Integer:: that indicates duration of the interval.
+
+METHOD:: autochopped
+Plays the sounds of the same group several times at randomly assigned rates during a certain interval.
+
+ARGUMENT:: times
+An link::Classes/Integer:: that indicates the number of times that the rate will be changed.
+
+ARGUMENT:: tempo
+An link::Classes/Integer:: that indicates duration of the interval.
+
+METHOD:: similarauto
+Returns a set of similar sounds from a target sound scheduled to be downloaded on every certain interval.
+
+ARGUMENT:: targetnumsnd
+An link::Classes/Integer:: indicating the index number of the sound in the group.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
+
+ARGUMENT:: tempo
+An link::Classes/Integer:: indicating the interval in seconds.
+
+METHOD:: sameidauto
+Plays the same sound a number of times on every certain interval.
+
+ARGUMENT:: id
+An link::Classes/Integer:: indicating the Freesound ID number of a sound.
+
+ARGUMENT:: size
+An link::Classes/Integer:: that indicates the number of times to retrieve the same sound.
+
+ARGUMENT:: tempo
+An link::Classes/Integer:: indicating the interval in seconds.
+
+subsection:: Sound effects methods
+
+METHOD:: bypass
+Bypasses the effects.
+
+METHOD:: lowpf
+Applies a lowpass filter.
+
+METHOD:: highpf
+Applies a highpass filter.
+
+METHOD:: bandpf
+applies a bandpass filter.
+
+ARGUMENT:: freq
+Centre frequency in Hertz. WARNING: due to the nature of its implementation frequency values close to 0 may cause glitches and/or extremely loud audio artifacts.
+
+METHOD:: reverb
+Applies a reverb.
+
+METHOD:: vibrato
+Applies a phaser.
+
+ARGUMENT:: maxdelaytime
+The maximum delay time in seconds. Used to initialize the delay buffer size.
+
+METHOD:: delay
+Applies a delay.
+
+METHOD:: bitcrush
+Applies a bitcrush filter.
+
+METHOD:: distort
+Applies a distortion.
+
+ARGUMENT:: ampfx
+Controls the point at which the output signal becomes linear.
+
+METHOD:: compress
+Applies a compressor.
+
+ARGUMENT:: threshold
+Control signal amplitude threshold, which determines the break point between slopeBelow and slopeAbove. Usually 0..1. The control signal amplitude is calculated using RMS.
+
+subsection:: Info methods
+
+METHOD:: credits
+Prints the list of sounds used in a session including information about the title of the sound, author and the license.
+
+METHOD:: whatdur
+Returns the duration of a sound.
+
+ARGUMENT:: feature
+A link::Classes/String:: that describes the duration of a sound in the Freesound API.
+
+returns:: A link::Classes/Float:: indicating the duration of the sound.
+
+METHOD:: whatkey
+Returns the key of a sound.
+
+ARGUMENT:: feature
+A link::Classes/String:: that describes the key of a sound in the Freesound API.
+
+returns:: A link::Classes/String:: indicating the key of the sound.
+
+METHOD:: whatpitch
+Returns the pitch of a sound.
+
+ARGUMENT:: feature
+A link::Classes/String:: that describes the pitch of a sound in the Freesound API.
+
+returns:: A link::Classes/String:: indicating the pitch of the sound.
+
+METHOD:: whatid
+Returns the ID of a sound.
+
+ARGUMENT:: feature
+A link::Classes/String:: that describes the ID of a sound in the Freesound API.
+
+returns:: A link::Classes/String:: indicating the ID of the sound.
+
+METHOD:: whatbpm
+Returns the BPM of a sound.
+
+ARGUMENT:: feature
+A link::Classes/String:: that describes the BPM of a sound in the Freesound API.
+
+returns:: A link::Classes/String:: indicating the BPM of the sound.
+
+METHOD:: whatvol
+Returns the volume.
+
+METHOD:: info
+(describe method here)
+
+returns:: (describe returnvalue here)
+
+METHOD:: analyze
+Retrieves all content-based descriptors listed in the Analysis Descriptor Documentation from the FreeSound API: "https://www.freesound.org/docs/api/analysis_docs.html#analysis-docs". The result can be filtered using the descriptors request parameter passing a list of comma separated descriptor names chosen from the available descriptors e.g. 'descriptors=lowlevel.mfcc,rhythm.bpm'
+
+ARGUMENT:: descriptors
+
+ARGUMENT:: action
+
+returns:: A link::Classes/String:: indicating information about the descriptors of the sound
+
+METHOD:: printsynths
+Prints the synths information and associated FS metadata information for all the active sounds.
+
+METHOD:: printsynth
+Prints the synth information and associated FS metadata information of the current active sound.
+
+ARGUMENT:: index
+An link::Classes/Integer:: indicating the index of the targeted sound.
+
+METHOD:: printbuffers
+Prints the buffers information and associated FS metadata information for all downloaded sounds.
+
+METHOD:: printmetadata
+Prints the FS metadata information for all downloaded sounds.
+
+METHOD:: printall
+Prints the 3 arrays stored during a session of metada, buffers and synths.
+
+METHOD:: plotserver
+Plots the server.
+
+METHOD:: scope
+Plots an oscilloscope.
+
+PRIVATE:: loadmetadata, loadsounds, sndidexist, sequencemachine, parallelmachine, free, freeall, argstranslate, gettranslation
+
+EXAMPLES::
+
+subsection:: Setup and Instantiation
+
+code::
+
+// You can specify where you want to download the sounds and create the list of credits.
+// Before instantiating MIRLCRep2, it is recommended that you define the 2 paths. Please note: the directory should exist! The slash at the end is very important.
+(
+z = "/Users/anna/Desktop/MIRLC/";
+y ="/Users/anna/Desktop/credits/";
+)
+File.mkdir(z); // This line will create the directory if it doesn't exist yet.
+File.mkdir(y); // This line will create the directory if it doesn't exist yet.
+
+a = MIRLCRep2.new(path: z, creditsPath: y); // Create an instance with defined paths
+
+::
+
+subsection:: Quick Test
+
+code::
+
+a.id(3333)
+
+a.random
+a.random(2)
+
+a.tag("jack"+"plugin")
+
+a.similar
+
+a.content
+
+a.content (1, 'dur', 1, 'conf', 'lo')
+
+a.filter(0, 1, ".lowlevel.pitch_instantaneous_confidence.mean:", "[0 TO 1]")
+
+a.filter(0, 1, "conf", "bypass")
+
+a.solo(1)
+
+a.similarauto
+
+a.credits
+
+a.fadeout
+
+::

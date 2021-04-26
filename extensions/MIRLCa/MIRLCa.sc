@@ -136,10 +136,10 @@ MIRLCa : MIRLCRep2 {
 					postln("ERROR: There was a problem downloading the sound with ID " ++ id ++ "\nINFO: Please try again.");},
 				{
 					if ( tmpSnd["similar_sounds"].isNil , {
-						postln("ERROR: This sound does not have similar_sounds information required by the MIRLCa agent.\nINFO: Please try another sound.");});
+						postln("ERROR: This sound does not have similar_sounds information required by the MIRLCa agent.\nWARNING: Please try another sound.");});
 
 					if ( tmpSnd["detail"] == "Not found.", {
-						postln("ERROR: Sound details not found.\nINFO: Please try another sound.");
+						postln("ERROR: Sound details not found.\nWARNING: Please try another sound.");
 					});
 
 					if ( tmpSnd["detail"] != "Not found." && tmpSnd["similar_sounds"].notNil , { // ID exists
@@ -246,7 +246,7 @@ MIRLCa : MIRLCRep2 {
     // SIMILAR SOUNDS
     //------------------//
 	// Performance mode: Public function that returns the best candidate of a list of similar sounds given a target sound. It can only return one sound for now.
-	similar { | targetnumsnd = 0, size = 1, cand = 14 |
+	similar { | targetnumsnd = 0, size = 1, cand = 15 |
 
 		var index_offset = 1; //*
 		var candidates = cand; // 1 page has 15 sounds. %TODO: load a second page asynchronously using FSPager as an asynchronous action using the method next
@@ -260,7 +260,7 @@ MIRLCa : MIRLCRep2 {
 		// temp solutions to avoid unhandled limits
 		if (targetnumsnd >= metadata.size, { postln("INFO: This target sound does not exist.\nPlease choose another target sound."); }); // temp solution: limit retrieval to 1 sound
 		if (size != 1, {size = 1}); // temp solution: limit retrieval to 1 sound
-		if (candidates > 14, {candidates = 14}); // temp solution: limit to 14 sounds limited by the FSPager
+		if (candidates > 15, {candidates = 15}); // temp solution: limit to 14 sounds limited by the FSPager
 
 		try {
 		target.getSimilar(params:query_params,
@@ -300,7 +300,7 @@ MIRLCa : MIRLCRep2 {
 		];
 
 		if (size != 1, {size = 1}); // temp solution: limit retrieval to 1 sound
-		if (candidates > 15, {candidates = 15}); // temp solution: limit to 15 sounds provided by FSPager
+		if (candidates > 15, {candidates = 15}); // temp solution: limit to 14 sounds provided by FSPager
 
 		// try { // seems to be giving an error
         backendClass.textSearch( query: tag, params: query_params,
@@ -517,7 +517,7 @@ MIRLCa : MIRLCRep2 {
 						});
 
 					};
-					if (found == False, {("INFO: Only bad sounds were found from "++(candidates-1)++" candidates.\nTry another sound.").postln});
+					if (found == False, {("WARNING: Only bad sounds were found from "++(candidates)++" candidates.\nWARNING:Try another sound.").postln});
 				});
 				// test_predicted_label_dataset.write(modelfilepath ++ "test_predicted_label_dataset.txt");
 				server.sync;
@@ -679,8 +679,8 @@ MIRLCa : MIRLCRep2 {
 					//v.postln;
 					//v.class.postln;
 				};
-				if (found == False, {postln("INFO: Only bad sounds were found from "++(candidates-1)++" candidates.\nTry another sound.")});
-				});
+				if (found == False, {postln("WARNING: Only bad sounds were found from "++(candidates)++" candidates.\nWARNING: Try another sound.")});
+				}); // TODO: for similarity the total sounds returned are candidates-1
 				test_predicted_label_dataset.write(directoryPath ++ "test_predicted_label_dataset.txt"); server.sync;
 
 
@@ -744,7 +744,7 @@ MIRLCa : MIRLCRep2 {
 			"Please wait until the sound has been downloaded before manually annotating it...".postln;
 			postln("********************************************");
 		}, {
-			"INFO: You should call the method 'starttraining' first".postln;
+			"WARNING: You should call the method 'starttraining' first".postln;
 		});
 
 	} //-//
@@ -897,7 +897,7 @@ MIRLCa : MIRLCRep2 {
 			// postln("Bad sounds: " ++ badsounds);
 			postln("********************************************");
 		}, {
-			postln("INFO: You are in performance mode.");
+			postln("INFO: You are in performance mode or not in training mode.");
 		});
 	} //-//
 
@@ -982,7 +982,7 @@ MIRLCa : MIRLCRep2 {
 
 				if ( snd_t.isNil,
 					{
-						postln("ERROR: There was a problem downloading this sound.\nTry another sound.");
+						postln("ERROR: There was a problem downloading this sound.\nWARNING: Try another sound.");
 						this.messagestraining;
 					},
 					{
@@ -1012,6 +1012,10 @@ MIRLCa : MIRLCRep2 {
 						temp_list_training[0] = sndid_t;
 
 						snd_t.getAnalysis("lowlevel.mfcc", { | val |
+
+							if ( (val.lowlevel.mfcc.mean[0] == 0) || (val.lowlevel.mfcc.mean[1] == 0) || (val.lowlevel.mfcc.mean[2] == 0) || (val.lowlevel.mfcc.mean[3] == 0) ,
+								{ postln("WARNING: At least two MFCCs retrieved zero, this sound should be skipped. Please annotate it as [namevariable].skip");
+							});
 
 							temp_list_training[2] = val.lowlevel.mfcc.mean[0];
 							temp_list_training[3] = val.lowlevel.mfcc.mean[1];
@@ -1049,7 +1053,7 @@ MIRLCa : MIRLCRep2 {
 
                     },
                     {
-						postln("ERROR: Either SoundID or sound analysis does not exist.\nTry another sound.");
+						postln("ERROR: Either SoundID or sound analysis does not exist.\nWARNING: Try another sound.");
 						this.messagestraining;
 					}); // End IF getanalysis
 				}); // End of IF snd_t.isNil

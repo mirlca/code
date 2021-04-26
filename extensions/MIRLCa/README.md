@@ -19,11 +19,17 @@ Drag the MIRLCa folder to the Extensions folder of SuperCollider (suggested to c
 
 ## Requirements
 
-* Make sure you have the SuperCollider extension MIRLC2 installed and working.
-* It is recommended that you define the 3 folders where:
-	* the sounds are downloaded (write mode).
-	* the sound credits list is stored (write mode).
-	* the models are loaded from (read mode).
+1. **MIRLC2 Extension + Freesound quark**: Make sure you have the SuperCollider extension [MIRLC2](../extensions/MIRLC2) installed and working. This includes:
+	* Make sure you have an Internet connection.
+	* Make sure you have a [Freesound.org](http://freesound.org) account.
+	* Make sure to obtain an [API key](https://freesound.org/help/developers/).
+	* Install [Freesound quark](https://github.com/g-roma/Freesound.sc), which is a SuperCollider client for accessing the Freesound API and operate with sounds from Freesound.org. **Note**: For Windows/Linux users: "curl" should be installed in your computer so that Freesound.quark and the related extensions work. 
+	* In order to connect with Freesound.org, the type of authentication used in MIRLC is Token. Make sure to introduce your API key in the class `MIRLC2.sc` and recompile the class library.
+2. **FluCoMa**: Make sure you have the FluCoMa library installed.  Official link coming soon. 
+3. **File Directories**: When instantiating the class in performance/training mode, it is recommended that you define the 3 folders (see the example in the HelpFile):
+	* **Downloads**: the sounds are downloaded (write mode).
+	* **Sound credits**: the sound credits list is stored (write mode).
+	* **Machine learning models**: the models are loaded from (read mode).
 
 ## JSON files
 

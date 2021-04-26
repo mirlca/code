@@ -1,7 +1,7 @@
 
 MIRLCa Repository
 ===
-This repository contains the code related to MIRLCa, a SuperCollider extension that inherits from MIRLCRep2 class and expands its capabilities by proposing a virtual agent that embodies machine learning techniques. 
+This repository contains the code related to MIRLCa, a SuperCollider extension that inherits from MIRLCRep2 class and expands its capabilities by proposing a virtual agent that embodies machine learning techniques using the FluCoMa library. 
 
 (c) 2020 by Anna Xambó (<anna.xambo@dmu.ac.uk>).
 

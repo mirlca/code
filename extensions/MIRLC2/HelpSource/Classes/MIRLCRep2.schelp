@@ -472,7 +472,7 @@ Plots the server.
 METHOD:: scope
 Plots an oscilloscope.
 
-PRIVATE:: loadmetadata, loadsounds, sndidexist, sequencemachine, parallelmachine, free, freeall, argstranslate, gettranslation
+PRIVATE:: loadmetadata, loadsounds, sndidexist, sequencemachine, parallelmachine, free, freeall, argstranslate, gettranslation, printdirectories
 
 EXAMPLES::
 

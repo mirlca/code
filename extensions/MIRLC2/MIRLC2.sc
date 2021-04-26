@@ -89,10 +89,7 @@ MIRLCRep2 {
 		{|error| [\catchFileWrite, error].postln };
 		// end of management of credits file
 
-       this.argstranslate;
-
-		postln("INFO MIRLC: Sounds will be downloaded at: " ++ directoryPath);
-		postln("INFO MIRLC: A sound credits list will be created at: " ++ creditsfilepath);
+        this.argstranslate;
 
 		server.waitForBoot {
 
@@ -236,6 +233,7 @@ MIRLCRep2 {
 
 
        //this.scope;
+		this.printdirectories;
 
 		};
 
@@ -1570,6 +1568,16 @@ MIRLCRep2 {
         postln("synths dictionary: ");
         this.printsynths;
     } //--//
+
+    //------------------//
+    // PRINT DIRECTORIES
+    //------------------//
+    // This private function prints the relevant directories where files are loaded from / saved to.
+	printdirectories {
+		// this.class.name
+		postln("[INFO MIRLC]: Sounds will be downloaded at: " ++ directoryPath);
+		postln("[INFO MIRLC]: A sound credits list will be created at: " ++ creditsfilepath);
+	} //-//
 
     //------------------//
     // CREDITS

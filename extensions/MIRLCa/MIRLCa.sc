@@ -62,9 +62,6 @@ MIRLCa : MIRLCRep2 {
 		test_dict = Dictionary();
 		test_label_dict = Dictionary();
 
-		postln("INFO MIRLCa: Machine learning models are loaded from (performance mode) and will be saved at (training mode): " ++ modelfilepath);
-		postln("INFO MIRLCa: Sounds will be downloaded at: " ++ directoryPath);
-		postln("INFO MIRLCa: A sound credits list will be created at: " ++ creditsfilepath);
 
 		server.waitForBoot {
 
@@ -1275,6 +1272,18 @@ MIRLCa : MIRLCRep2 {
         });
 		this.printmetadata;
     }
+
+    //------------------//
+    // PRINT DIRECTORIES
+    //------------------//
+    // This private function prints the relevant directories where files are loaded from / saved to.
+	printdirectories {
+		// this.class.name
+		postln("[INFO MIRLCa]: Machine learning models are loaded from (in performance mode)" ++ "\nand will be saved at (in training mode): " ++ modelfilepath);
+		postln("[INFO MIRLCa]: Sounds will be downloaded at: " ++ directoryPath);
+		postln("[INFO MIRLCa]: A sound credits list will be created at: " ++ creditsfilepath);
+	} //-//
+
 
 
 }

@@ -37,7 +37,7 @@ ARGUMENT:: id
 An link::Classes/Integer:: indicating the Freesound ID number of a sound.
 
 ARGUMENT:: size
-An link::Classes/Integer:: that indicates the number of sounds to be retrieved. 
+An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
 
 returns:: A link::Classes/FSSound:: sound
 
@@ -45,7 +45,7 @@ METHOD:: tag
 In performance mode, returns the best candidate of a sound from Freesound that contains a requested tag.
 
 ARGUMENT:: tag
-A link::Classes/String:: that indicates the tag. 
+A link::Classes/String:: that indicates the tag.
 
 ARGUMENT:: size
 An link::Classes/Integer:: that indicates the number of sounds to be retrieved.
@@ -70,7 +70,7 @@ METHOD:: similar
 In performance mode, returns the best candidate of a list of similar sounds from Freesound given a target sound.
 
 ARGUMENT:: targetnumsnd
-An link::Classes/Integer:: that indicates the index number in the  EMPHASIS::metadata:: link::Classes/Array:: target sound to find a similar sound. 
+An link::Classes/Integer:: that indicates the index number in the  EMPHASIS::metadata:: link::Classes/Array:: target sound to find a similar sound.
 
 ARGUMENT:: size
 An link::Classes/Integer:: that indicates the number of sounds to be returned. Beware of the current limit to 1.
@@ -88,9 +88,9 @@ A link::Classes/String:: indicating one of the following modes:
 
     definitionlist::
 	 ## STRONG::"random"::
-	 || Default value. Returns a random sound from Freesound. 
+	 || Default value. Returns a random sound from Freesound.
 	 ## STRONG::"id"::
-	 || Returns a sound by ID from Freesound. 
+	 || Returns a sound by ID from Freesound.
     ::
 
 returns:: A link::Classes/FSSound:: sound
@@ -119,7 +119,7 @@ METHOD:: stoptraining
 In training mode, stops the training process.
 
 ARGUMENT:: perc
-The threshold of the number of candidates for the training set vs the number of candidates for the testing set as a proportion value. Beware of the permitted ranges: 0.0-1.0. 
+The threshold of the number of candidates for the training set vs the number of candidates for the testing set as a proportion value. Beware of the permitted ranges: 0.0-1.0.
 
 returns:: A link::Classes/String:: indicating the accuracy value in percentage (0%-100%)
 
@@ -136,9 +136,9 @@ A link::Classes/String:: indicating one of the following modes:
 
     definitionlist::
 	 ## STRONG::"random"::
-	 || Default value. Returns a random sound from Freesound. 
+	 || Default value. Returns a random sound from Freesound.
 	 ## STRONG::"id"::
-	 || Returns a sound by ID from Freesound. 
+	 || Returns a sound by ID from Freesound.
     ::
 
 returns:: A link::Classes/FSSound:: sound, either by random or by sound ID
@@ -157,7 +157,7 @@ In training mode, shows status info about the dataset.
 
 returns:: A link::Classes/String:: indicating the status.
 
-PRIVATE:: initagent, fadeout_t, loadmetadata_t, getsoundfromfreesound, giverandomsound, getbestfromtarget, givesoundbyid, selectanswerbymode, getbest, pris, messagestraining, storeplaysound, updatedict
+PRIVATE:: initagent, fadeout_t, loadmetadata_t, getsoundfromfreesound, giverandomsound, getbestfromtarget, givesoundbyid, selectanswerbymode, getbest, pris, messagestraining, storeplaysound, updatedictm, prid, printdirectories
 
 EXAMPLES::
 
@@ -166,7 +166,7 @@ subsection:: Setup and Instantiation
 code::
 (
 
-// MIRLCa uses 3 directories to: 1) download the sounds from Freesound, 2) create a sound credits list text file with a list of all the used sounds in the performance and 3) load the 3 JSON files that represent the machine learning model and write the 3 JSON files in the training mode. 
+// MIRLCa uses 3 directories to: 1) download the sounds from Freesound, 2) create a sound credits list text file with a list of all the used sounds in the performance and 3) load the 3 JSON files that represent the machine learning model and write the 3 JSON files in the training mode.
 // Before instantiating MIRLCa, it is recommended that you define the 3 paths. Please note: the directory should exist! The slash at the end is very important.
 // 1) Directory to download the sounds from Freesound:
 
@@ -183,7 +183,7 @@ x ="/Users/anna/Desktop/MIRLCa-default/";
 File.mkdir(z); File.mkdir(y); File.mkdir(x);// This line will create the directory if it doesn't exist yet.
 
 // Create an instance with defined paths
-a = MIRLCa.new(path: z, creditsPath: y, modelsPath: x); 
+a = MIRLCa.new(path: z, creditsPath: y, modelsPath: x);
 
 // MIRLCa has two modes: 1) performance mode and 2) training mode.
 
@@ -198,14 +198,14 @@ code::
 // Before using similar sound, you need a target sound, this can be a sound by ID, by tag or by random
 
 a.id(31362)
-a.id(3333) 
+a.id(3333)
 
 a.tag("footsteps")
 a.tag("jack"+"plugin")
 
 // For a random sound, you can define the number of candidates for the best random sound. The default value is 7. The larger the number, the more time it will take. Be patient.
 
-a.random 
+a.random
 
 a.random(cand:10)
 a.random(cand:4)
@@ -243,7 +243,7 @@ a.play(0.5)
 
 a.play
 
-// Print the credits on the Post window 
+// Print the credits on the Post window
 
 a.credits
 
@@ -265,7 +265,7 @@ a.starttraining
 
 // To retrieve a random sound
 
-a.trainrand 
+a.trainrand
 
 // Or to retrieve a sound by ID number
 
@@ -275,7 +275,7 @@ a.trainid(3333)
 
 a.skip
 
-// To annotate the sound: you need to wait until the sound is dowloaded, and then you need to execute the methods 'ok' or 'ko' depending on whether you like the sound or not. 
+// To annotate the sound: you need to wait until the sound is dowloaded, and then you need to execute the methods 'ok' or 'ko' depending on whether you like the sound or not.
 
 
 // If you like the sound, execute this command
@@ -288,7 +288,7 @@ a.ko
 
 // Once you annotate the sound, you will need to tell what's the next sound you want to annotate by executing the methods 'trainrand' or 'trainid' until you stop training.
 
-// Once you have trained some sounds, you can stop the training to check what is the accuracy result so far.   
+// Once you have trained some sounds, you can stop the training to check what is the accuracy result so far.
 
 a.stoptraining
 
@@ -296,17 +296,17 @@ a.stoptraining
 
 // If you don't like the result, you can continue training
 
-a.continuetraining 
+a.continuetraining
 
 // And then either
 
-a.trainrand 
+a.trainrand
 
 // Or
 
 a.trainid(3334)
 
-// You can always print the information of how many sounds you have annotated so far during the training session 
+// You can always print the information of how many sounds you have annotated so far during the training session
 
 a.showinfo
 

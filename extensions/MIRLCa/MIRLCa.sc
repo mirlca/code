@@ -37,6 +37,7 @@ MIRLCa : MIRLCRep2 {
 	var stand_test_dataset_fixed;
 	var mode_training;
 	var modelfilepath;
+	var archiving;
 
 	*new { | backend = 0, dbSize = 478456, path = (Platform.defaultTempDir), creditsPath = (Platform.defaultTempDir), modelsPath = (Platform.defaultTempDir) |
 		^super.new(backend, dbSize, path, creditsPath).initagent(modelsPath);
@@ -175,12 +176,6 @@ MIRLCa : MIRLCRep2 {
 		});
 		} // end try
 		{ |error| [\catchgetSound, error].postln }; // end catch error
-		try {
-			file.open(creditsfilename,"a");
-			file.write(currentsnd["name"] ++ " by " ++ currentsnd["username"] ++ " (" ++ currentsnd["url"] ++") licensed under " ++ currentsnd["license"] + "\n");
-			file.close();
-		} //end try
-		{ |error| [\catchFileWrite, error].postln }; // end catch error
 
 	} //-//
 
@@ -204,12 +199,14 @@ MIRLCa : MIRLCRep2 {
 				if ( is_training == False, // checks have been made of similarity data and file existence data (analysis data is not needed here)
 					{
 						this.storeplaysound(tmpSnd, size);
+						this.printcredits(tmpSnd);
 					},
 					{ // IF Training is TRUE, only 1 sound at a time
 						if ( is_training == True, { // checks have been made of analysis data
 							index = 0;
 							metadata.add(index -> tmpSnd);
 							this.loadmetadata_t(1); // size = 1, only 1 sound at a time
+							this.printcredits(tmpSnd);
 							// TODO: Write the filenames during training distinguishing	between good and bad sounds
 						});
 					}); // End IF is_training == False
@@ -387,7 +384,7 @@ MIRLCa : MIRLCRep2 {
 			tmpSnd = f;
 
 			if ( tmpSnd.isNil, {
-							postln("ERROR: There was a problem downloading the sound with ID" ++ temp_list_ids[index] ++ ".\nThis sound will be skipped from the list of candidates.");}, {
+							postln("ERROR: There was a problem downloading the sound with ID" ++ temp_list_ids[index] ++ ".\nWARNING: This sound will be skipped from the list of candidates.");}, {
 				// "INFO: Sound has been downloaded.".postln;
 				// Extra comment:
 				// Nicer and more compact code, but unfortunately it cannot be used because we need to keep the same order than in the training process.
@@ -396,11 +393,11 @@ MIRLCa : MIRLCRep2 {
 					temp_list.add(snd["analysis"]["lowlevel"]["mfcc"]["var"][i]);
 				};*/
 				if (tmpSnd["analysis"].isNil) {
-					postln("ERROR: Sound analysis does not exist.\nThis sound will be skipped from the list of candidates.");
+					postln("ERROR: Sound analysis does not exist.\nWARNING: This sound will be skipped from the list of candidates.");
 				};
 
 					if (tmpSnd["detail"]=="Not found.", { // TODO: For some reason this does not seem to work: If the sound does not exist it retrieves the message "ERROR: Message 'id' not understood."
-						postln("ERROR: Sound details not found.\nSound not included.");
+						postln("ERROR: Sound details not found.\nWARNING: Sound not included.");
 			});
 
 					if ( tmpSnd["detail"] != "Not found." && tmpSnd["analysis"].notNil, {
@@ -723,7 +720,7 @@ MIRLCa : MIRLCRep2 {
 			"Please wait until the sound has been downloaded before manually annotating it...".postln;
 			postln("********************************************");
 		}, {
-			"INFO: You should call the method 'starttraining' first".postln;
+			"INFO: You should call the method 'starttraining' or 'continuetraining' first".postln;
 		});
 
 	} //-//
@@ -741,7 +738,7 @@ MIRLCa : MIRLCRep2 {
 			"Please wait until the sound has been downloaded before manually annotating it...".postln;
 			postln("********************************************");
 		}, {
-			"WARNING: You should call the method 'starttraining' first".postln;
+			"WARNING: You should call the method 'starttraining' or 'continuetraining' first".postln;
 		});
 
 	} //-//
@@ -1241,16 +1238,36 @@ MIRLCa : MIRLCRep2 {
 	// Training mode: Public function to save the machine learning model as JSON files for a later follow-up.
 
 	archive {
-		postln("INFO: This function will archive the dictionary for future training.");
-		postln(manual_dataset_dict);
+
+		if (is_training==True, {
+			archiving = (); // Event for the training dictionary information
+			// var virtualfilename = "\myData";
+			// For now it will overwrite the values every time
+			archiving[\manual_dataset] = manual_dataset_dict;
+			Archive.global.put(\todayTraining, archiving);
+			postln("INFO: Dataset successfully save as: ");
+			Archive.global.at(\todayTraining).postcs;
+			postln("INFO: This function will temporarily archive the dictionary for later training.\nUse [namevariable].load to load it again.");
+			// postln(manual_dataset_dict);
+		});
+
 	} //-//
 
 	load {
-		postln("INFO: This function will load the dictionary for follow-up training.");
-		postln("********************************************");
-		postln("You have " ++ manual_dataset_dict.size ++ " sounds in your dataset");
-		postln("The sound IDs are: "++manual_dataset_dict.keys);
-		postln("********************************************");
+
+		if (is_training==True, {
+
+			archiving = Archive.global.at(\todayTraining); // Event for retrieving the dictionary information
+			archiving.postcs;
+			// archiving[\manual_dataset].value;
+			// archiving[\manual_dataset].size;
+			// postln("MANUAL DATASET BEFORE");
+			// postln(manual_dataset_dict);
+			manual_dataset_dict = archiving[\manual_dataset];
+			// postln("MANUAL DATASET AFTER");
+			postln("INFO: Dataset successfully loaded as: ");
+			postln(manual_dataset_dict);
+		});
 	}
 
 	fadeout_t { |release = 1.0|
@@ -1283,6 +1300,19 @@ MIRLCa : MIRLCRep2 {
 		postln("[INFO MIRLCa]: Sounds will be downloaded at: " ++ directoryPath);
 		postln("[INFO MIRLCa]: A sound credits list will be created at: " ++ creditsfilepath);
 	} //-//
+
+    //------------------//
+    // PRINT CREDITS
+    //------------------//
+    // This private function prints the sound credits list on a text file.
+	printcredits { | snd |
+		try {
+			file.open(creditsfilename,"a");
+			file.write(snd["name"] ++ " by " ++ snd["username"] ++ " (" ++ snd["url"] ++") licensed under " ++ snd["license"] + "\n");
+			file.close();
+		} //end try
+		{ |error| [\catchFileWrite, error].postln }; // end catch error
+	}
 
 
 

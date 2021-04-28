@@ -147,17 +147,20 @@ METHOD:: pause
 In training mode, fades out the sound that is currently playing. Deprecated function since using  CODE::trainrand:: instead of the previous automatic process.
 
 METHOD:: archive
-In training mode, saves the training data to continue later.
+In training mode, saves the training dataset to continue later. Only one session can be saved at present.
 
 METHOD:: load
-In training mode, loads the saved training data to continue training.
+In training mode, loads the saved training dataset to continue training.
 
 METHOD:: showinfo
 In training mode, shows status info about the dataset.
 
 returns:: A link::Classes/String:: indicating the status.
 
-PRIVATE:: initagent, fadeout_t, loadmetadata_t, getsoundfromfreesound, giverandomsound, getbestfromtarget, givesoundbyid, selectanswerbymode, getbest, pris, messagestraining, storeplaysound, updatedictm, prid, printdirectories
+METHOD:: printdirectories
+In training or performance mode, prints the directory paths where the sounds are downloaded and the sound credits list is generated.
+
+PRIVATE:: initagent, fadeout_t, loadmetadata_t, getsoundfromfreesound, giverandomsound, getbestfromtarget, givesoundbyid, selectanswerbymode, getbest, pris, messagestraining, storeplaysound, updatedictm, prid, printcredits
 
 EXAMPLES::
 
@@ -313,6 +316,24 @@ a.showinfo
 // After stop training, if you are happy with the accuracy results, execute this command to save your results to JSON files.
 
 a.save
+
+// If there's a problem with the session, or a sound that is not correctly downloaded, you can temporarily archive the training dataset
+
+a.archive
+
+// It is then possible to load it again in a new SuperCollider / MIRLCa session.
+
+a.load
+
+// The starttraining needs to be called again
+
+a.starttraining
+
+// To check that the training dataset has been properly loaded you can execute
+
+a.showinfo
+
+
 
 )
 ::
